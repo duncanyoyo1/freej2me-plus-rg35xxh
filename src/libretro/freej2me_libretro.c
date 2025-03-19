@@ -83,6 +83,19 @@ void retro_set_environment(retro_environment_t fn)
 	retro_set_environment_core_info(fn);
 }
 
+void exit_retroarch() {
+    if (Environ) {
+		retro_deinit();
+        // Call the environment callback with RETRO_ENVIRONMENT_SHUTDOWN
+        bool success = Environ(RETRO_ENVIRONMENT_SHUTDOWN, NULL);
+        if (success) {
+            // Handle success case if needed
+        } else {
+            // Handle failure case if needed
+        }
+    }
+}
+
 void retro_set_input_poll(retro_input_poll_t fn) { InputPoll = fn; }
 void retro_set_input_state(retro_input_state_t fn) { InputState = fn; }
 
@@ -133,7 +146,7 @@ unsigned int frameSize = MAX_WIDTH * MAX_HEIGHT;
 unsigned int frameBufferSize = MAX_WIDTH * MAX_HEIGHT * 3;
 unsigned int frame[MAX_WIDTH * MAX_HEIGHT];
 unsigned char frameBuffer[MAX_WIDTH * MAX_HEIGHT * 3];
-unsigned char frameHeader[13];
+unsigned char frameHeader[14];
 struct retro_game_info gameinfo;
 
 bool frameRequested = false;
@@ -151,6 +164,8 @@ int phoneType = 0; /* 0=Standard (Nokia/Sony/Samsung), 1=LG, 2=Motorola/SoftBank
 int backlightColor = 1; /* 0=Disabled, 1=Green, etc. */
 int gameFPS; /* Auto(0), 60, 30, 15 */
 int soundEnabled; /* also acts as a boolean */
+int multiMidletEnabled = 0; /* also acts as a boolean */
+int mousePointerTimeout = 1; /* mouse timeout mul factor*/
 int customMidi; /* Also acts as a boolean */
 int dumpAudioStreams;
 int loggingLevel;
@@ -359,6 +374,19 @@ static void check_variables(bool first_time_startup)
 		else if (!strcmp(var.value, "on")) { soundEnabled = 1; }
 	}
 
+	var.key = "freej2me_multimidletselector";
+	if (Environ(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+	{
+		if (!strcmp(var.value, "off"))     { multiMidletEnabled = 0; }
+		else if (!strcmp(var.value, "on")) { multiMidletEnabled = 1; }
+	}
+
+	var.key = "freej2me_mousetimeout";
+	if (Environ(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+	{
+		if (!strcmp(var.value, "0"))     { mousePointerTimeout = 1; }
+		else if (!strcmp(var.value, "1")) { mousePointerTimeout = 4; }
+	}
 
 	var.key = "freej2me_midifont";
 	if (Environ(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -493,7 +521,7 @@ static void check_variables(bool first_time_startup)
 	/* Prepare a string to pass those core options to the Java app */
 	options_update = malloc(sizeof(char) * PIPE_MAX_LEN);
 
-	snprintf(options_update, PIPE_MAX_LEN, "FJ2ME_LR_OPTS:|%lux%lu|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d", screenRes[0], screenRes[1], rotateScreen, phoneType, gameFPS, soundEnabled, customMidi, dumpAudioStreams, loggingLevel, spdHackNoAlpha, backlightColor, compatNonFatalNullImages, compatClipRectOnGfxReset);
+	snprintf(options_update, PIPE_MAX_LEN, "FJ2ME_LR_OPTS:|%lux%lu|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d", screenRes[0], screenRes[1], rotateScreen, phoneType, gameFPS, soundEnabled, customMidi, dumpAudioStreams, loggingLevel, spdHackNoAlpha, backlightColor, compatNonFatalNullImages, compatClipRectOnGfxReset, multiMidletEnabled);
 	optstrlen = strlen(options_update);
 
 	/* 0xD = 13, which is the special case where the java app will receive the updated configs */
@@ -543,7 +571,7 @@ void retro_init(void)
 
 	/* Check variables and set parameters */
 	check_variables(true);
-	char resArg[2][4], rotateArg[2], phoneArg[2], fpsArg[3], soundArg[2], midiArg[2], dumpAudioArg[2], logLevelArg[2], spdHackNoAlphaArg[2], backlightArg[2], compatNonFatalNullImagesArg[2], compatClipRectOnGfxResetArg[2];
+	char resArg[2][4], rotateArg[2], phoneArg[2], fpsArg[3], soundArg[2], midiArg[2], dumpAudioArg[2], logLevelArg[2], spdHackNoAlphaArg[2], backlightArg[2], compatNonFatalNullImagesArg[2], compatClipRectOnGfxResetArg[2], multiMidletArg[2];
 	sprintf(resArg[0], "%lu", screenRes[0]);
 	sprintf(resArg[1], "%lu", screenRes[1]);
 	sprintf(rotateArg, "%d", rotateScreen);
@@ -557,6 +585,7 @@ void retro_init(void)
 	sprintf(backlightArg, "%d", backlightColor);
 	sprintf(compatNonFatalNullImagesArg, "%d", compatNonFatalNullImages);
 	sprintf(compatClipRectOnGfxResetArg, "%d", compatClipRectOnGfxReset);
+	sprintf(multiMidletArg, "%d", multiMidletEnabled);
 
 	/* We need to clean up any argument memory from the previous launch arguments in order to load up updated ones */
 	if (restarting)
@@ -575,7 +604,7 @@ void retro_init(void)
 	}
 
 	/* Allocate memory for launch arguments */
-	params = (char**)malloc(sizeof(char*) * 17);
+	params = (char**)malloc(sizeof(char*) * 18);
 	params[0] = strdup("java");
 	params[1] = strdup("-jar");
 	params[2] = strdup("freej2me-lr.jar");
@@ -592,7 +621,8 @@ void retro_init(void)
 	params[13] = strdup(backlightArg);
 	params[14] = strdup(compatNonFatalNullImagesArg);
 	params[15] = strdup(compatClipRectOnGfxResetArg);
-	params[16] = NULL; // Null-terminate the array
+	params[16] = strdup(multiMidletArg);
+	params[17] = NULL; // Null-terminate the array
 
 	log_fn(RETRO_LOG_INFO, "Preparing to open FreeJ2ME-Plus' Java app.\n");
 
@@ -615,7 +645,7 @@ void retro_init(void)
 	if(!isRunning()) { Environ(RETRO_ENVIRONMENT_SET_MESSAGE_EXT, (void*)&messages[COULD_NOT_START_MSG]); }
 	else 
 	{
-		Environ(RETRO_ENVIRONMENT_SET_MESSAGE_EXT, (void*)&messages[CORE_HAS_LOADED_MSG]);
+		//Environ(RETRO_ENVIRONMENT_SET_MESSAGE_EXT, (void*)&messages[CORE_HAS_LOADED_MSG]);
 	}
 	/* Setup keyboard input */
 	struct retro_keyboard_callback kb = { Keyboard };
@@ -828,7 +858,7 @@ void retro_run(void)
 		{
 			joymouseAnalog = true;
 			/* This means that the mouse pointer will be visible for 30 frames (half a second, since 60fps is a second) */
-			joymouseTime = DEFAULT_FPS / 2;
+			joymouseTime = mousePointerTimeout * (DEFAULT_FPS / 2);
 			joymouseX += joyRx<<1;
 			joymouseY += joyRy<<1;
 
@@ -846,7 +876,7 @@ void retro_run(void)
 			if(mouseX != 0 || mouseY !=0)
 			{
 				joymouseAnalog = false;
-				joymouseTime = DEFAULT_FPS / 2;
+				joymouseTime = mousePointerTimeout * (DEFAULT_FPS / 2);
 				joymouseX += mouseX;
 				joymouseY += mouseY;
 
@@ -867,7 +897,7 @@ void retro_run(void)
 			if(mouseLpre != mouseL)
 			{
 				if(mouseL == 1) { joymouseClickedTime = DEFAULT_FPS * 0.1; }
-				joymouseTime = DEFAULT_FPS / 2;
+				joymouseTime = mousePointerTimeout * (DEFAULT_FPS / 2);
 				joyevent[0] = 4 + mouseL;
 				joyevent[1] = (joymouseX >> 8) & 0xFF;
 				joyevent[2] = (joymouseX) & 0xFF;
@@ -908,7 +938,7 @@ void retro_run(void)
 				{
 					/* when mouse is visible, and using analog stick for mouse, L3 / [num 5] clicks */
 					if(joypad[i] == 1) { joymouseClickedTime = DEFAULT_FPS * 0.1; }
-					joymouseTime = DEFAULT_FPS / 2;
+					joymouseTime = mousePointerTimeout * (DEFAULT_FPS / 2);
 					joyevent[0] = 4+joypad[18];
 					joyevent[1] = (joymouseX >> 8) & 0xFF;
 					joyevent[2] = (joymouseX) & 0xFF;
@@ -973,7 +1003,7 @@ void retro_run(void)
 		/* read frame header */
 		frameRequested = false;
 		framesDropped = 0;
-		status = read_from_pipe(pRead[0], frameHeader, 13);
+		status = read_from_pipe(pRead[0], frameHeader, 14);
 
 		if(status>0)
 		{
@@ -988,6 +1018,12 @@ void retro_run(void)
 			{ 
 				log_fn(RETRO_LOG_INFO, "Received Vibration event of %d ms. Strength is 0x%04X\n", preRumbleTime, rumbleStrength); 
 				rumbleTime = preRumbleTime;
+			}
+
+			char exited = frameHeader[13];
+			if (exited == 1) {
+				exit_retroarch();
+				return;
 			}
 
 			if(r!=0)
@@ -1143,7 +1179,6 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 	int pixelformat = RETRO_PIXEL_FORMAT_XRGB8888;
 	Environ(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &pixelformat);
 }
-
 
 void retro_deinit(void)
 {

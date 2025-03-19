@@ -230,7 +230,7 @@ public class Manager
 
 			// And save the copy to the specified dir
 			OutputStream outStream;
-			String dumpPath = "." + File.separatorChar + "FreeJ2MEDumps" + File.separatorChar + "Audio" + File.separatorChar + Mobile.getPlatform().loader.suitename + File.separatorChar;
+			String dumpPath = "." + File.separatorChar + "FreeJ2MEDumps" + File.separatorChar + "Audio" + File.separatorChar + Mobile.getPlatform().loader.getSuiteName() + File.separatorChar;
 			File dumpFile = new File(dumpPath);
 
 			if (!dumpFile.isDirectory()) { dumpFile.mkdirs(); }

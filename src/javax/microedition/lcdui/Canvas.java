@@ -18,8 +18,6 @@ package javax.microedition.lcdui;
 
 import org.recompile.mobile.Mobile;
 import org.recompile.mobile.MobilePlatform;
-import org.recompile.mobile.PlatformImage;
-import org.recompile.mobile.PlatformGraphics;
 
 public abstract class Canvas extends Displayable
 {
@@ -176,7 +174,7 @@ public abstract class Canvas extends Displayable
 				// we need this to avoid stackoverflow
 				// but it seems the underlying problem is that when paint calls
 				// repaint, we shouldn't even land here...
-				Mobile.getDisplay().callSerially(() -> { repaint(x, y, width, height); });
+				//Mobile.getDisplay().callSerially(() -> { repaint(x, y, width, height); });
 				return;
 			}
 

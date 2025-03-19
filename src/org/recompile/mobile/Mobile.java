@@ -21,11 +21,14 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Canvas;
-import javax.microedition.media.Manager;
-import javax.microedition.midlet.MIDlet;
 
 import org.recompile.freej2me.Config;
 
@@ -62,9 +65,10 @@ public class Mobile
 	public static boolean dumpAudioStreams = false;
 
 	// Enable/disable logging to the console and optionally to a file
-	public static boolean logging = true; 
+	public static boolean logging = true;
 	private static final String LOG_FILE = "freej2me_system" + File.separatorChar + "FreeJ2ME.log";
 	public static final String SIEMENS_DATA_PATH = "freej2me_system" + File.separatorChar + "SiemensData" + File.separatorChar;
+	private static final String IP_MAP_FILE = "freej2me_system" + File.separatorChar + "ip_map.txt";
 	public static byte minLogLevel = 1;
 
 	// Log Levels
@@ -84,6 +88,7 @@ public class Mobile
 									  // Disabled  , Green     , Cyan      , Orange    , Violet    , Red       , FunLights (can change)
 	public static int[] lcdMaskColors = {0xFFFFFFFF, 0xFF77EF5A, 0xFF5676F6, 0xFFEE9930, 0xFFC47AFF, 0xFFFF6262, 0xFFFFFFFF};
 	public static int maskIndex = 1;
+	public static boolean multipleMidlet = false;
 	public static boolean renderLCDMask = false;
 
 	// Moto Funlight Regions (here, corners of the screen, Display region is handled through the LCD mask)
@@ -134,6 +139,9 @@ public class Mobile
 
 	// Support for explicit FPS limit on jars that require it to work properly
 	public static int limitFPS = 0;
+
+	// A flag to notify the Libretro interface that the app has been terminated
+	public static byte appTerminated = 0;
 
 	//MIDP Canvas keycodes (A.K.A the standard set provided by MIDP)
 	public static final int KEY_NUM0  = Canvas.KEY_NUM0;  // 48
@@ -243,6 +251,13 @@ public class Mobile
 	public static final int SAGEM_SOFT1 = -7; // KEY_SOFTKEY1 = -7; (Left Soft)
 	public static final int SAGEM_SOFT2 = -6; // KEY_SOFTKEY2 = -6; (Right Soft)
 	public static final int SAGEM_SOFT3 = -5; // KEY_SOFTKEY3 = -5; (Fire)
+
+	/**
+     * Stores mappings between addresses (IPs or hostnames).
+     * Key: Source address (IP or hostname).
+     * Value: Target address (IP or hostname).
+     */
+    public static final Map<String, String> addressMappings = new HashMap<>();
 
 	public static MobilePlatform getPlatform() { return platform; }
 
@@ -654,6 +669,9 @@ public class Mobile
 		if(clipRectOnGfxReset.equals("on"))        { compatClipRectOnGfxReset = true; }
 		else if (clipRectOnGfxReset.equals("off")) { compatClipRectOnGfxReset = false; };
 
+		// Get address mappings from file
+		loadAddressMappingsFromFile();
+
 
 		// Rotation is left at the end since it governs this method's return value
 		String rotate = config.settings.get("rotate");
@@ -670,4 +688,34 @@ public class Mobile
 		// If no rotation has to be done, return false
 		return false;
 	}
+
+    /**
+     * Loads address mappings from a file into the addressMappings map.
+     *
+     * @return The populated addressMappings map.
+     */
+    private static Map<String, String> loadAddressMappingsFromFile() {
+        addressMappings.clear(); // Clear existing mappings before loading.
+        File file = new File(IP_MAP_FILE);
+
+        if (file.exists()) {
+            try {
+                List<String> lines = Files.readAllLines(Paths.get(IP_MAP_FILE));
+                for (String line : lines) {
+                    String[] parts = line.split(",");
+                    if (parts.length == 2) {
+                        addressMappings.put(parts[0].trim(), parts[1].trim()); // Trim whitespace.
+                    } else {
+                        log(LOG_WARNING, "Invalid line format in address mappings file: " + line);
+                    }
+                }
+            } catch (IOException e) {
+                log(LOG_ERROR, "Error reading address mappings file: " + e.getMessage());
+            }
+        } else {
+            log(LOG_WARNING, "Address mappings file not found: " + IP_MAP_FILE);
+        }
+
+        return addressMappings;
+    }
 }

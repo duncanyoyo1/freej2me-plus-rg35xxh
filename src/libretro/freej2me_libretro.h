@@ -154,7 +154,7 @@ struct retro_core_option_v2_definition core_options[] =
             { "800x480",   NULL },
             { NULL, NULL },
         },
-        "240x320"
+        "320x240"
     },
     {
         "freej2me_rotate",
@@ -266,6 +266,34 @@ struct retro_core_option_v2_definition core_options[] =
             { NULL, NULL },
         },
         "off"
+    },
+    {
+        "freej2me_multimidletselector",
+        "System > Show Midlet selector",
+        "Show Midlet selector",
+        "Show Midlet selector",
+        "Show Midlet selector",
+        "system_settings",
+        {
+            { "off", "Disabled" },
+            { "on",  "Enabled" },
+            { NULL, NULL },
+        },
+        "off"
+    },
+    {
+        "freej2me_mousetimeout",
+        "System > Mouse pointer timeout",
+        "Mouse pointer timeout",
+        "Mouse pointer timeout",
+        "Mouse pointer timeout",
+        "system_settings",
+        {
+            { "0", "Short" },
+            { "1",  "Long" },
+            { NULL, NULL },
+        },
+        "0"
     },
     {
         "freej2me_logginglevel",
@@ -497,7 +525,7 @@ struct retro_core_option_definition core_options_v1 [] =
             { "800x480",   NULL },
             { NULL, NULL },
         },
-        "240x320"
+        "320x240"
     },
     {
         "freej2me_rotate",

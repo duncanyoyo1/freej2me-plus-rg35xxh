@@ -60,7 +60,10 @@ public abstract class MIDlet
 	public final void notifyDestroyed()
 	{ 
 		Mobile.log(Mobile.LOG_INFO, MIDlet.class.getPackage().getName() + "." + MIDlet.class.getSimpleName() + ": " + "MIDlet sent Destroyed Notification");
-		System.exit(0);
+		if(!Mobile.getPlatform().isLibretro) { System.exit(0); }
+		else {
+			Mobile.appTerminated = 1;
+		}
 	}
 
 	public final void notifyPaused() { }

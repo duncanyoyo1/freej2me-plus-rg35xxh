@@ -77,7 +77,7 @@ public class RecordStore
 
 		if(name == "") { throw(new RecordStoreException("The record name:'"+ name +"' is not valid")); }
 
-		appname = Mobile.getPlatform().loader.suitename;
+		appname = Mobile.getPlatform().loader.getSuiteName();
 
 		rmsPath = Mobile.getPlatform().dataPath + "./rms/"+appname;
 		rmsFile = Mobile.getPlatform().dataPath + "./rms/"+appname+"/"+name;
@@ -321,7 +321,7 @@ public class RecordStore
 		try
 		{
 			Mobile.log(Mobile.LOG_DEBUG, RecordStore.class.getPackage().getName() + "." + RecordStore.class.getSimpleName() + ": " + "Deleting RecordStore "+recordStoreName);
-			File fstore = new File(Mobile.getPlatform().dataPath + "./rms/"+Mobile.getPlatform().loader.suitename+"/"+recordStoreName);
+			File fstore = new File(Mobile.getPlatform().dataPath + "./rms/"+Mobile.getPlatform().loader.getSuiteName()+"/"+recordStoreName);
 			fstore.delete();
 		}
 		catch (Exception e)
@@ -431,7 +431,7 @@ public class RecordStore
 		Mobile.log(Mobile.LOG_DEBUG, RecordStore.class.getPackage().getName() + "." + RecordStore.class.getSimpleName() + ": " + "List Record Stores");
 		if(rmsPath==null)
 		{
-			rmsPath = Mobile.getPlatform().dataPath + "./rms/"+Mobile.getPlatform().loader.name;
+			rmsPath = Mobile.getPlatform().dataPath + "./rms/"+Mobile.getPlatform().loader.getSuiteName();
 			try
 			{
 				Files.createDirectories(Paths.get(rmsPath));

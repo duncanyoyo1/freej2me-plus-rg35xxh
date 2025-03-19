@@ -16,9 +16,7 @@
 */
 package org.recompile.mobile;
 
-import java.net.URL;
 import java.security.MessageDigest;
-import java.util.Arrays;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
@@ -26,15 +24,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 
 import javax.microedition.lcdui.Image;
-import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.game.Sprite;
-import javax.microedition.lcdui.game.GameCanvas;
 
 import javax.imageio.ImageIO;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferInt;
 
 public class PlatformImage extends javax.microedition.lcdui.Image
@@ -471,12 +464,12 @@ public class PlatformImage extends javax.microedition.lcdui.Image
 	// TODO: Turn this into a setting. Being able to dump image data would be nice.
 	public static void dumpImage(BufferedImage image, String append) 
 	{
-        try 
+        try
 		{
 			String imageMD5 = generateMD5Hash(image);
-			String dumpPath = "." + File.separatorChar + "FreeJ2MEDumps" + File.separatorChar + "Image" + File.separatorChar + Mobile.getPlatform().loader.suitename + File.separatorChar;
+			String dumpPath = "." + File.separatorChar + "FreeJ2MEDumps" + File.separatorChar + "Image" + File.separatorChar + Mobile.getPlatform().loader.getSuiteName() + File.separatorChar;
 			File dumpFile = new File(dumpPath);
-			
+
 			if (!dumpFile.isDirectory()) { dumpFile.mkdirs(); }
 			
 			dumpPath = dumpPath + "Image_" + imageMD5 + append + ".png";

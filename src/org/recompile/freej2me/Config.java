@@ -28,12 +28,8 @@ import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.Path;
-
-import javax.microedition.media.Manager;
 
 import org.recompile.mobile.Mobile;
-import org.recompile.mobile.PlatformImage;
 
 public class Config
 {
@@ -69,7 +65,7 @@ public class Config
 
 	public void init()
 	{
-		String appname = Mobile.getPlatform().loader.suitename;
+		String appname = Mobile.getPlatform().loader.getSuiteName();
 		configPath = Mobile.getPlatform().dataPath + "./config/"+appname;
 		configFile = configPath + "/game.conf";
 		// Load Config //

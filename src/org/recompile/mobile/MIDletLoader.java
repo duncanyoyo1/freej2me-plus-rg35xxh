@@ -24,17 +24,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.lang.ClassLoader;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -42,6 +38,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -56,33 +53,20 @@ import javax.microedition.midlet.MIDletStateChangeException;
 
 public class MIDletLoader extends URLClassLoader
 {
-	public String name;
-	public String icon;
-	private String className;
-
-	public String suitename;
-
 	private Class<?> mainClass;
 	private MIDlet mainInst;
+	private URL urls[];
 
 	private HashMap<String, String> properties = new HashMap<String, String>(32);
+
+	private List<String> midletNames = new ArrayList<String>();
+	private List<String> classNames = new ArrayList<String>();
 
 
 	public MIDletLoader(URL urls[], Map<String, String> descriptorProperties)
 	{
 		super(urls);
-
-		try 
-		{
-			String jarName = Paths.get(urls[0].toURI()).getFileName().toString().replace('.', '_');
-			suitename = jarName;
-		} 
-		catch (URISyntaxException e) 
-		{
-			Mobile.log(Mobile.LOG_ERROR, MIDletLoader.class.getPackage().getName() + "." + MIDletLoader.class.getSimpleName() + ": " + "Failed to parse jar:" + e.getMessage());
-			e.printStackTrace();
-		}
-
+		this.urls = urls;
 		try
 		{
 			System.setProperty("microedition.platform", "j2me");
@@ -134,11 +118,9 @@ public class MIDletLoader extends URLClassLoader
 		properties.put("supports.audio.capture", "false");
 		properties.put("supports.video.capture", "false");
 		properties.put("supports.recording", "false");
-
-		if (className == null) { className = findMainClassInJars(urls); }
 	}
 
-	public static String findMainClassInJars(URL[] urls) 
+	public static String findMainClassInJars(URL[] urls)
 	{
 		// we search for a class file containing "startApp" 
 		// note this is just an approximation, but it often works
@@ -162,16 +144,16 @@ public class MIDletLoader extends URLClassLoader
                         if (hasStartApp(className, jarFile.getInputStream(entry))) { return className; }
                     }
                 }
-            } 
+            }
 			catch (IOException e) { e.printStackTrace(); }
         }
-        return null;
-    }
+		return null;
+		}
 
-	private static boolean hasStartApp(String className, InputStream is) 
-	{
+		private static boolean hasStartApp(String className, InputStream is)
+		{
 		byte[] pattern = "startApp".getBytes();
-		try 
+		try
 		{
 			byte[] classBytes = readBytes(is);
 			for (int i = 0; i < classBytes.length - pattern.length; i++) 
@@ -201,9 +183,13 @@ public class MIDletLoader extends URLClassLoader
         return buffer.toByteArray();
     }
 
-	public void start() throws MIDletStateChangeException
+	public void start(int index) throws MIDletStateChangeException
 	{
+
 		Method start = null;
+
+		String className = classNames.get(index);
+		Mobile.log(Mobile.LOG_INFO, "Loading MIDlet: " + midletNames.get(index) +" | Main Class: " + className);
 
 		try
 		{
@@ -218,7 +204,7 @@ public class MIDletLoader extends URLClassLoader
 		}
 		catch (Exception e)
 		{
-			Mobile.log(Mobile.LOG_ERROR, MIDletLoader.class.getPackage().getName() + "." + MIDletLoader.class.getSimpleName() + ": " + "Problem Constructing " + name + " class: " +className);
+			Mobile.log(Mobile.LOG_ERROR, MIDletLoader.class.getPackage().getName() + "." + MIDletLoader.class.getSimpleName() + ": " + "Problem Constructing " + midletNames.get(index) + " class: " +className);
 			Mobile.log(Mobile.LOG_ERROR, MIDletLoader.class.getPackage().getName() + "." + MIDletLoader.class.getSimpleName() + ": " + "Reason: "+e.getMessage());
 			e.printStackTrace();
 			return;
@@ -320,24 +306,45 @@ public class MIDletLoader extends URLClassLoader
 			e.printStackTrace();
 		}
 
-		if (properties.containsKey("MIDlet-1")) 
-		{
-			String val = properties.get("MIDlet-1");
-			String[] parts = val.split(",");
-			if (parts.length == 3) 
-			{
-				name = parts[0].trim();
-				icon = parts[1].trim();
-				
-				if (className == null) { className = parts[2].trim(); }
-				
-				suitename = name;
-				suitename = suitename.replace(":","");
-			}
+		// parse all MIDlets from the manifest
+        for (int i = 1; properties.containsKey("MIDlet-" + i); i++) {
+            String midletKey = "MIDlet-" + i;
+            String val = properties.get(midletKey);
+            String[] parts = val.split(",");
 
-			Mobile.log(Mobile.LOG_INFO, "Loading MIDlet: " + suitename +" | Main Class: " + className);
+            if (parts.length == 3) {
+                String name = parts[0].trim();
+                String className = parts[2].trim();
+                String suiteName = name;
+                suiteName = suiteName.replace(":", "");
+
+                classNames.add(className);
+                midletNames.add(suiteName);
+            }
+        }
+
+		// fallback: find main class in jar if not found in manifest
+		if (this.classNames.isEmpty()) {
+			String className = findMainClassInJars(urls);
+			if (className != null) {
+				this.classNames.add(className);
+				try
+				{
+					String jarName = Paths.get(urls[0].toURI()).getFileName().toString().replace('.', '_');
+					this.midletNames.add(jarName);
+				}
+				catch (URISyntaxException e)
+				{
+					Mobile.log(Mobile.LOG_ERROR, MIDletLoader.class.getPackage().getName() + "." + MIDletLoader.class.getSimpleName() + ": " + "Failed to parse jar:" + e.getMessage());
+					e.printStackTrace();
+				}
+			} else {
+				Mobile.log(Mobile.LOG_ERROR, MIDletLoader.class.getPackage().getName() + "." + MIDletLoader.class.getSimpleName() + ": " + "No MIDlet found in jar!");
+			}
 		}
 	}
+
+	public List<String> getMIDletNames() { return midletNames; }
 
 
 	public InputStream getResourceAsStream(String resource)
@@ -436,7 +443,8 @@ public class MIDletLoader extends URLClassLoader
 					{
                         // Construct the URL for the found resource
                         String jarEntryUrl = "jar:" + jarUrl.toExternalForm() + "!/" + entryName;
-                        return new URL(jarEntryUrl);
+						URI uri = new URI(jarEntryUrl);
+						return uri.toURL();
                     }
                 }
             } catch (URISyntaxException | IOException e) {
@@ -545,6 +553,16 @@ public class MIDletLoader extends URLClassLoader
 			return null;
 		}
 
+	}
+
+	public String getSuiteName() {
+		// Alway return the first MIDlet name
+		if (this.midletNames.size() > 0) {
+			return this.midletNames.get(0);
+		}
+
+		// Should never happen
+		return "Unknown";
 	}
 
 

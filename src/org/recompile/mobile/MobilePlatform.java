@@ -20,8 +20,8 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -37,10 +37,8 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
 import javax.microedition.lcdui.Canvas;
-import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Font;
-import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.game.GameCanvas;
 import javax.microedition.lcdui.Image;
 
@@ -90,6 +88,7 @@ public class MobilePlatform
 	public static int[] pointerDragged = new int[3];
 
 	public Runnable painter;
+	public MidletSelectScreen midletSelectScreen;
 
 	public MobilePlatform(int width, int height)
 	{
@@ -143,6 +142,10 @@ public class MobilePlatform
 			Mobile.getDisplay().getCurrent().platformImage = lcd; 
 			Mobile.getDisplay().getCurrent().graphics = gc; 
 		}
+	}
+
+	public PlatformGraphics gePlatformGraphics() {
+		return gc;
 	}
 
 	public BufferedImage getLCD() { return lcd.getCanvas(); }
@@ -265,22 +268,53 @@ public class MobilePlatform
             fileName = jarUrl;
         }
 
-        try 
+        try
 		{
-            URL jar = new URL(fileName);
-            loader = new MIDletLoader(new URL[]{jar}, descriptorProperties);
+			URI jarUri = new URI(fileName);
+			URL jarUrl = jarUri.toURL();
+            loader = new MIDletLoader(new URL[]{jarUrl}, descriptorProperties);
             return true;
-        } 
-		catch (Exception e) 
+        }
+		catch (Exception e)
 		{
             Mobile.log(Mobile.LOG_ERROR, MobilePlatform.class.getPackage().getName() + "." + MobilePlatform.class.getSimpleName() + ": " + "Failed to load Jar: " + e.getMessage());
             return false;
         }
     }
 
+	public boolean shouldShowMidletSelector() {
+		List<String> midlets = loader.getMIDletNames();
+		if (midlets.size() > 1 || midlets.size() == 0) { return true; }
+		return false;
+	}
+
+	/**
+	 * Executes a JAR file. If the platform has multiple MIDlets and the
+	 * configuration allows for multiple MIDlets, it will display a selection
+	 * screen for the user to choose which MIDlet to run. Otherwise, it will
+	 * run the first MIDlet in the JAR file.
+	 */
 	public void runJar()
 	{
-		try { loader.start(); }
+		if (this.shouldShowMidletSelector() && Mobile.multipleMidlet) {
+			midletSelectScreen = new MidletSelectScreen();
+			midletSelectScreen.Start();
+		} else {
+			this.startMidlet(0);
+		}
+	}
+
+	/**
+	 * Starts the MIDlet at the specified index.
+	 *
+	 * @param index The index of the MIDlet to start.
+	 */
+	public void startMidlet(int index)
+	{
+		if (this.midletSelectScreen != null) {
+			this.midletSelectScreen = null;
+		}
+		try { loader.start(index); }
 		catch (Exception e)
 		{
 			Mobile.log(Mobile.LOG_ERROR, MobilePlatform.class.getPackage().getName() + "." + MobilePlatform.class.getSimpleName() + ": " + "Error Running Jar");

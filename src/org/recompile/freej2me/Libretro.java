@@ -22,13 +22,10 @@ import org.recompile.mobile.MobilePlatform;
 import java.awt.image.DataBufferInt;
 import java.util.Timer;
 import java.util.TimerTask;
-
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 
-import javax.microedition.midlet.MIDlet;
+import java.nio.charset.StandardCharsets;
 
 public class Libretro
 {
@@ -38,7 +35,7 @@ public class Libretro
 	private boolean soundEnabled = true;
 
 	private byte[] frameBuffer = new byte[800*800*3];
-	private final byte[] frameHeader = new byte[]{(byte)0xFE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	private final byte[] frameHeader = new byte[]{(byte)0xFE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 	private int mousex;
 	private int mousey;
@@ -126,6 +123,7 @@ public class Libretro
 		if(Integer.parseInt(args[12]) == 0) { Mobile.compatClipRectOnGfxReset = false; }
 		else { Mobile.compatClipRectOnGfxReset = true; }
 
+		if(Integer.parseInt(args[13]) == 1) { Mobile.multipleMidlet = true; }
 
 		/* Once it finishes parsing all arguments, it's time to set up freej2me-lr */
 
@@ -189,9 +187,13 @@ public class Libretro
 
 								case 2:	// joypad key up
 									MobilePlatform.pressedKeys[code] = false;
+									if (Mobile.getPlatform().midletSelectScreen != null)
+									{
+										Mobile.getPlatform().midletSelectScreen.OnKey(code);
+									}
 								break;
 
-								case 3: // joypad key down					
+								case 3: // joypad key down
 									MobilePlatform.pressedKeys[code] = true;
 								break;
 
@@ -377,6 +379,12 @@ public class Libretro
 									if(Integer.parseInt(cfgtokens[13])==0) { Mobile.config.settings.put("compatcliprectongfxreset", "off");  }
 									else { Mobile.config.settings.put("compatcliprectongfxreset", "on"); }
 
+									if(Integer.parseInt(cfgtokens[14])==0) {
+										Mobile.multipleMidlet = false;
+									} else {
+										Mobile.multipleMidlet = true;
+									}
+
 									Mobile.config.saveConfig();
 									settingsChanged();
 								break;
@@ -384,44 +392,52 @@ public class Libretro
 								case 15:
 									/* Send Frame to Libretro */
 									try
-									{				
-										//frameHeader[0] = (byte)0xFE;
-										frameHeader[1] = (byte)((lcdWidth>>8)&0xFF);
-										frameHeader[2] = (byte)((lcdWidth)&0xFF);
-										frameHeader[3] = (byte)((lcdHeight>>8)&0xFF);
-										frameHeader[4] = (byte)((lcdHeight)&0xFF);
-										//frameHeader[5] = (byte)rotateDysplay; ( seen in settingsChanged() )
-										frameHeader[6] = (byte)((Mobile.vibrationDuration>>24) & 0xFF);
-										frameHeader[7] = (byte)((Mobile.vibrationDuration>>16) & 0xFF);
-										frameHeader[8] = (byte)((Mobile.vibrationDuration>>8) & 0xFF);
-										frameHeader[9] = (byte)((Mobile.vibrationDuration) & 0xFF);
+									{
+										ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-										frameHeader[10] = (byte)((Mobile.vibrationStrength>>24) & 0xFF);
-										frameHeader[11] = (byte)((Mobile.vibrationStrength>>16) & 0xFF);
-										frameHeader[12] = (byte)((Mobile.vibrationStrength>>8) & 0xFF);
-										frameHeader[13] = (byte)((Mobile.vibrationStrength) & 0xFF);
-										System.out.write(frameHeader, 0, 14);
+										// frameHeader[0] = (byte)0xFE;
+										frameHeader[1] = (byte)((lcdWidth >> 8) & 0xFF);
+										frameHeader[2] = (byte)(lcdWidth & 0xFF);
+										frameHeader[3] = (byte)((lcdHeight >> 8) & 0xFF);
+										frameHeader[4] = (byte)(lcdHeight & 0xFF);
+										// frameHeader[5] = (byte)rotateDisplay; (seen in settingsChanged())
+										frameHeader[6] = (byte)((Mobile.vibrationDuration >> 24) & 0xFF);
+										frameHeader[7] = (byte)((Mobile.vibrationDuration >> 16) & 0xFF);
+										frameHeader[8] = (byte)((Mobile.vibrationDuration >> 8) & 0xFF);
+										frameHeader[9] = (byte)(Mobile.vibrationDuration & 0xFF);
+
+										frameHeader[10] = (byte)((Mobile.vibrationStrength >> 24) & 0xFF);
+										frameHeader[11] = (byte)((Mobile.vibrationStrength >> 16) & 0xFF);
+										frameHeader[12] = (byte)((Mobile.vibrationStrength >> 8) & 0xFF);
+										frameHeader[13] = (byte)(Mobile.vibrationStrength & 0xFF);
+										frameHeader[14] = (byte)(Mobile.appTerminated);
+										outputStream.write(frameHeader, 0, 15);
 
 										/* Vibration duration should be set to zero to prevent constant sends of the same data, so update it here */
 										Mobile.vibrationDuration = 0;
 
 										final int[] data = ((DataBufferInt) Mobile.getPlatform().getLCD().getRaster().getDataBuffer()).getData();
 
-										for(int i=0; i<data.length; i++)
+										for (int i = 0; i < data.length; i++)
 										{
-											frameBuffer[3*i]   = (byte)((data[i]>>16)&0xFF);
-											frameBuffer[3*i+1] = (byte)((data[i]>>8)&0xFF);
-											frameBuffer[3*i+2] = (byte)((data[i])&0xFF);
+											frameBuffer[3 * i]     = (byte)((data[i] >> 16) & 0xFF);
+											frameBuffer[3 * i + 1] = (byte)((data[i] >> 8) & 0xFF);
+											frameBuffer[3 * i + 2] = (byte)(data[i] & 0xFF);
 										}
 
-										System.out.write(frameBuffer, 0, data.length*3);
+										outputStream.write(frameBuffer, 0, data.length * 3);
+
+										// Write all the data to System.out in one go
+										System.out.flush();
+										System.out.write(outputStream.toByteArray());
 										System.out.flush();
 									}
 									catch (Exception e)
 									{
-										Mobile.log(Mobile.LOG_DEBUG, Libretro.class.getPackage().getName() + "." + Libretro.class.getSimpleName() + ": " + "Error sending frame: "+e.getMessage());
+										Mobile.log(Mobile.LOG_DEBUG, Libretro.class.getPackage().getName() + "." + Libretro.class.getSimpleName() + ": " + "Error sending frame: " + e.getMessage());
 										System.exit(0);
 									}
+
 								break;
 							}
 							//System.out.flush();
