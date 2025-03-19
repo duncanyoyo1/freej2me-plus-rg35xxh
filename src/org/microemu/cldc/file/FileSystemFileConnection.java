@@ -28,7 +28,6 @@ package org.microemu.cldc.file;
 
 // import android.content.Context;
 // import android.net.Uri;
-import android.util.Log;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -272,7 +271,6 @@ public class FileSystemFileConnection implements FileConnection {
 			URI uri = new URI("file", host, getPath() + getName(), null);
 			return uri.toASCIIString();
 		} catch (URISyntaxException e) {
-			Log.e(TAG, "getURL: ", e);
 			return Connection.PROTOCOL + this.host + DIR_SEP + getPath() + name;
 		}
 	}
