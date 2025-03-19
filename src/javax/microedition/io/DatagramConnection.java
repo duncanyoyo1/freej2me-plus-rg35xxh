@@ -15,24 +15,24 @@
 	along with FreeJ2ME.  If not, see http://www.gnu.org/licenses/
 */
 package javax.microedition.io;
-
+import java.io.IOException;
 public interface DatagramConnection extends Connection
 {
 
-	public int getMaximumLength();
+	public int getMaximumLength()throws IOException;
 
-	public int getNominalLength();
+	public int getNominalLength()throws IOException;
 
-	public Datagram newDatagram(byte[] buf, int size);
+	public Datagram newDatagram(byte[] buf, int size)throws IOException;
 
-	public Datagram newDatagram(byte[] buf, int size, String addr);
+	public Datagram newDatagram(byte[] buf, int size, String addr)throws IOException;
 
-	public Datagram newDatagram(int size);
+	public Datagram newDatagram(int size)throws IOException;
 
-	public Datagram newDatagram(int size, String addr);
+	public Datagram newDatagram(int size, String addr)throws IOException;
 
-	public void receive(Datagram dgram);
+	public void receive(Datagram dgram)throws IOException;
 
-	public void send(Datagram dgram);
+	public void send(Datagram dgram)throws IOException;
 
 }

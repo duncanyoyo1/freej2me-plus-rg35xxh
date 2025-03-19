@@ -24,14 +24,18 @@
  *
  * @version $Id$
  */
-package javax.microedition.io.file;
+package org.microemu.cldc.file;
 
-public interface FileSystemListener {
+import java.util.Enumeration;
 
-	public static final int ROOT_ADDED = 0;
+import javax.microedition.io.file.FileSystemListener;
 
-	public static final int ROOT_REMOVED = 1;
+public interface FileSystemRegistryDelegate {
 
-	public abstract void rootChanged(int i, String s);
+	public boolean addFileSystemListener(FileSystemListener listener);
+
+	public boolean removeFileSystemListener(FileSystemListener listener);
+
+	public Enumeration listRoots();
 
 }

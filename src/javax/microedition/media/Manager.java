@@ -156,7 +156,7 @@ public class Manager
 	public static String[] getSupportedProtocols(String content_type)
 	{
 		Mobile.log(Mobile.LOG_WARNING, Manager.class.getPackage().getName() + "." + Manager.class.getSimpleName() + ": " + "Get Supported Media Protocols");
-		return new String[]{};
+		return new String[]{"device", "file", "http"};
 	}
 	
 	public static void playTone(int note, int duration, int volume) throws MediaException

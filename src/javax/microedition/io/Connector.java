@@ -23,6 +23,9 @@ import java.io.DataOutputStream;
 
 import org.recompile.mobile.Mobile;
 
+import org.microemu.microedition.ImplFactory;
+import java.io.IOException;
+
 public class Connector
 {
 
@@ -30,40 +33,93 @@ public class Connector
 	public static final int READ_WRITE = 3;
 	public static final int WRITE = 2;
 
-	private static OutputStream output = null;
-	
-	public static InputStream openInputStream(String name)
+
+	public static InputStream openInputStream(String name) throws IOException
 	{
+		System.out.println("Connector: " + name);
 		if(name.startsWith("resource:")) // older Siemens phones?
 		{
-			return Mobile.getPlatform().loader.getMIDletResourceAsSiemensStream(name.substring(9).replaceAll("\\\\", "/"));
+			return Mobile.getPlatform().loader.getMIDletResourceAsSiemensStream(name.substring(9));
 		}
-		else
+		/*else
 		{
 			//return Mobile.getPlatform().loader.getMIDletResourceAsStream(name); // possible
-			Mobile.log(Mobile.LOG_WARNING, Connector.class.getPackage().getName() + "." + Connector.class.getSimpleName() + ": " + "Faked InputStream for "+name); // just in case //
+			System.out.println("Faked InputStream for "+name); // just in case //
 			return new fakeIS();
-		}
+		} */
+		return ImplFactory.getCGFImplementation(name).openInputStream(name);
+
 	}
 
 
-	public static DataInputStream openDataInputStream(String name)
+	public static DataInputStream openDataInputStream(String name) throws IOException
 	{
-		Mobile.log(Mobile.LOG_WARNING, Connector.class.getPackage().getName() + "." + Connector.class.getSimpleName() + ": " + "Faked DataInputStream: "+name);
-		return new DataInputStream(new fakeIS());
+		/* System.out.println("Faked DataInputStream: "+name);
+		return new DataInputStream(new fakeIS()); */
+		return ImplFactory.getCGFImplementation(name).openDataInputStream(name);
 	}
 
-	public static Connection open(String name) { return null; }
 
-	public static Connection open(String name, int mode) { return null; }
 
-	public static Connection open(String name, int mode, boolean timeouts) { return null; }
+	public static Connection open(String name) throws IOException {
+		//System.out.println("Connector: " + name);
 
-	public static DataOutputStream openDataOutputStream(String name) { return new DataOutputStream(output); }
 
-	public static OutputStream openOutputStream(String name) { return output; }
+		/* Throwable ex = new Throwable();
 
-	// fake inputstream 
+		StackTraceElement[] stackElements = ex.getStackTrace();
+
+		if (stackElements != null) {
+
+			for (int i = 0; i < stackElements.length; i++) {
+
+			System.out.print(stackElements[i].getClassName()+":");
+
+			System.out.print(stackElements[i].getFileName()+":");
+
+			System.out.print(stackElements[i].getLineNumber()+":");
+
+			System.out.println(stackElements[i].getMethodName());
+
+			System.out.println("-----------------------------------");
+
+			}
+
+		}
+
+		Exception e = new Exception("this is a log");
+
+		e.printStackTrace(); */
+
+		return ImplFactory.getCGFImplementation(name).open(name);
+
+	}
+
+	public static Connection open(String name, int mode) throws IOException {
+		//System.out.println("Connector: " + name);
+		return ImplFactory.getCGFImplementation(name).open(name, mode);
+	}
+
+	public static Connection open(String name, int mode, boolean timeouts) throws IOException {
+		//System.out.println("Connector: " + name);
+		return ImplFactory.getCGFImplementation(name).open(name, mode, timeouts);
+	}
+
+	public static DataOutputStream openDataOutputStream(String name) throws IOException{
+		/* return new DataOutputStream(new fakeOS());  */
+		//System.out.println("Connector: " + name);
+		return ImplFactory.getCGFImplementation(name).openDataOutputStream(name);
+	}
+
+	public static OutputStream openOutputStream(String name) throws IOException {
+		//System.out.println("Connector: " + name);
+		/* return new fakeOS();  */
+		return ImplFactory.getCGFImplementation(name).openOutputStream(name);
+	}
+
+
+
+	/* // fake inputstream
 	private static class fakeIS extends InputStream
 	{
 		public int avaliable() { return 0; }
@@ -77,12 +133,34 @@ public class Connector
 		public int read() { return 0; }
 
 		public int read(byte[] b) { return 0; }
-		
+
 		public int read(byte[] b, int off, int len) { return 0; }
 
 		public void reset() { }
 
 		public long skip(long n) { return (long)0; }
 	}
+
+	// fake outputstream
+	private static class fakeOS extends OutputStream
+	{
+		public int avaliable() { return 0; }
+
+		public void close() { }
+
+		public void mark() { }
+
+		public boolean markSupported() { return false; }
+
+		public void write(int b) { }
+
+		public void write(byte[] b) {  }
+
+		public void  write(byte[] b, int off, int len) {  }
+
+		public void reset() { }
+
+		public long skip(long n) { return (long)0; }
+	} */
 
 }

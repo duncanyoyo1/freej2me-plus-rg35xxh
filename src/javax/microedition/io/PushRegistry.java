@@ -16,19 +16,45 @@
 */
 package javax.microedition.io;
 
+
+import org.microemu.microedition.ImplFactory;
+import org.microemu.microedition.io.PushRegistryDelegate;
+
+import java.io.IOException;
+
 public class PushRegistry
 {
 
-	public static String getFilter(String connection) { return ""; }
+	private static PushRegistryDelegate impl;
 
-	public static String getMIDlet(String connection) { return ""; }
+	static {
+		impl = (PushRegistryDelegate) ImplFactory.getImplementation(PushRegistry.class, PushRegistryDelegate.class);
+	}
 
-	public static String[] listConnections(boolean available) { return new String[]{""}; }
+	public static void registerConnection(String connection, String midlet, String filter)
+			throws ClassNotFoundException, IOException {
+		impl.registerConnection(connection, midlet, filter);
+	}
 
-	public static long registerAlarm(String midlet, long time) { return 0; }
+	public static boolean unregisterConnection(String connection) {
+		return impl.unregisterConnection(connection);
+	}
 
-	public static void registerConnection(String connection, String midlet, String filter) {  }
+	public static String[] listConnections(boolean available) {
+		return impl.listConnections(available);
+	}
 
-	public static boolean unregisterConnection(String connection) { return true; }
+	public static String getMIDlet(String connection) {
+		return impl.getMIDlet(connection);
+	}
+
+	public static String getFilter(String connection) {
+		return impl.getFilter(connection);
+	}
+
+	public static long registerAlarm(String midlet, long time) throws ClassNotFoundException,
+			ConnectionNotFoundException {
+		return impl.registerAlarm(midlet, time);
+	}
 
 }

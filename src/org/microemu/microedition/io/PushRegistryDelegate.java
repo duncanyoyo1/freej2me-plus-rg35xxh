@@ -24,14 +24,25 @@
  *
  * @version $Id$
  */
-package javax.microedition.io.file;
+package org.microemu.microedition.io;
 
-public interface FileSystemListener {
+import java.io.IOException;
 
-	public static final int ROOT_ADDED = 0;
+import javax.microedition.io.ConnectionNotFoundException;
 
-	public static final int ROOT_REMOVED = 1;
+public interface PushRegistryDelegate {
 
-	public abstract void rootChanged(int i, String s);
+	public void registerConnection(String connection, String midlet, String filter) throws ClassNotFoundException,
+			IOException;
+
+	public boolean unregisterConnection(String connection);
+
+	public String[] listConnections(boolean available);
+
+	public String getMIDlet(String connection);
+
+	public String getFilter(String connection);
+
+	public long registerAlarm(String midlet, long time) throws ClassNotFoundException, ConnectionNotFoundException;
 
 }

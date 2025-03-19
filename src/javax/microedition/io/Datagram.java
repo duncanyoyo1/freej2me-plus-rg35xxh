@@ -18,6 +18,7 @@ package javax.microedition.io;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.IOException;
 
 public interface Datagram extends DataInput, DataOutput
 {
@@ -34,7 +35,7 @@ public interface Datagram extends DataInput, DataOutput
 
 	public void setAddress(Datagram reference);
 
-	public void setAddress(String addr);
+	public void setAddress(String addr) throws IOException;
 
 	public void setData(byte[] buffer, int offset, int len);
 

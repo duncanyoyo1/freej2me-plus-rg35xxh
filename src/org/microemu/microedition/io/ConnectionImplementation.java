@@ -24,14 +24,19 @@
  *
  * @version $Id$
  */
-package javax.microedition.io.file;
+package org.microemu.microedition.io;
 
-public interface FileSystemListener {
+import java.io.IOException;
 
-	public static final int ROOT_ADDED = 0;
+import javax.microedition.io.Connection;
 
-	public static final int ROOT_REMOVED = 1;
+/**
+ * This proper name for original <code>ClosedConnection</code> interface.
+ *
+ * @author vlads
+ */
+public interface ConnectionImplementation {
 
-	public abstract void rootChanged(int i, String s);
+	public Connection openConnection(String name, int mode, boolean timeouts) throws IOException;
 
 }

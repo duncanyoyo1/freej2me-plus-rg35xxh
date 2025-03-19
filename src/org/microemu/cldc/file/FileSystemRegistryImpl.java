@@ -24,14 +24,36 @@
  *
  * @version $Id$
  */
-package javax.microedition.io.file;
+package org.microemu.cldc.file;
 
-public interface FileSystemListener {
+import org.microemu.microedition.Implementation;
 
-	public static final int ROOT_ADDED = 0;
+import java.util.Enumeration;
 
-	public static final int ROOT_REMOVED = 1;
+import javax.microedition.io.file.FileSystemListener;
 
-	public abstract void rootChanged(int i, String s);
+public class FileSystemRegistryImpl implements FileSystemRegistryDelegate, Implementation {
+
+	@Override
+	public Enumeration listRoots() {
+		switch (Connection.getConnectionType()) {
+			case Connection.CONNECTIONTYPE_SYSTEM_FS:
+				return FileSystemFileConnection.listRoots();
+			default:
+				throw new RuntimeException("Invalid connectionType configuration");
+		}
+	}
+
+	@Override
+	public boolean addFileSystemListener(FileSystemListener listener) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean removeFileSystemListener(FileSystemListener listener) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 
 }

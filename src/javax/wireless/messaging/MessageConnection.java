@@ -15,7 +15,8 @@
 	along with FreeJ2ME.  If not, see http://www.gnu.org/licenses/
 */
 package javax.wireless.messaging;
-
+import java.io.IOException;
+import java.io.InterruptedIOException;
 public interface MessageConnection extends javax.microedition.io.Connection
 {
 	public static final String BINARY_MESSAGE = "binary";
@@ -28,9 +29,9 @@ public interface MessageConnection extends javax.microedition.io.Connection
 
 	public int numberOfSegments(Message msg);
 
-	public Message receive();
+	public Message receive() throws IOException, InterruptedIOException;
 
-	public void send(Message msg);
+	public void send(Message msg) throws IOException, InterruptedIOException;
 
-	public void setMessageListener(MessageListener l);
+	public void setMessageListener(MessageListener l) throws IOException;
 }

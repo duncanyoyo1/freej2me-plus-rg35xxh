@@ -24,14 +24,37 @@
  *
  * @version $Id$
  */
-package javax.microedition.io.file;
+package org.microemu.microedition.io;
 
-public interface FileSystemListener {
+import org.microemu.microedition.Implementation;
 
-	public static final int ROOT_ADDED = 0;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-	public static final int ROOT_REMOVED = 1;
+import javax.microedition.io.Connection;
 
-	public abstract void rootChanged(int i, String s);
+/**
+ * Delegate for javax.microedition.Connector
+ *
+ * @author vlads
+ */
+public interface ConnectorDelegate extends Implementation {
+
+	public Connection open(String name) throws IOException;
+
+	public Connection open(String name, int mode) throws IOException;
+
+	public Connection open(String name, int mode, boolean timeouts) throws IOException;
+
+	public DataInputStream openDataInputStream(String name) throws IOException;
+
+	public DataOutputStream openDataOutputStream(String name) throws IOException;
+
+	public InputStream openInputStream(String name) throws IOException;
+
+	public OutputStream openOutputStream(String name) throws IOException;
 
 }

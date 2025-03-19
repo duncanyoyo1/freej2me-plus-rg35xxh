@@ -16,12 +16,12 @@
 */
 package javax.microedition.io;
 
-
+import java.io.IOException;
 public interface HttpsConnection extends HttpConnection
 {
 
 	public int getPort();
 
-	public SecurityInfo getSecurityInfo();
+	public SecurityInfo getSecurityInfo() throws IOException;
 
 }

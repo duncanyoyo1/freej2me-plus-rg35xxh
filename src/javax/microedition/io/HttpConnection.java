@@ -15,7 +15,7 @@
 	along with FreeJ2ME.  If not, see http://www.gnu.org/licenses/
 */
 package javax.microedition.io;
-
+import java.io.IOException;
 
 public interface HttpConnection extends ContentConnection
 {
@@ -63,25 +63,25 @@ public interface HttpConnection extends ContentConnection
 	public static final String POST = "POST";
 
 
-	long getDate();
+	long getDate() throws IOException;
 
-	public long getExpiration();
+	public long getExpiration() throws IOException;
 
 	public String getFile();
 
-	public String getHeaderField(int n);
+	public String getHeaderField(int n) throws IOException;
 
-	public String getHeaderField(String name);
+	public String getHeaderField(String name) throws IOException;
 
-	public long getHeaderFieldDate(String name, long def);
+	public long getHeaderFieldDate(String name, long def) throws IOException;
 
-	public int getHeaderFieldInt(String name, int def);
+	public int getHeaderFieldInt(String name, int def) throws IOException;
 
-	public String getHeaderFieldKey(int n);
+	public String getHeaderFieldKey(int n) throws IOException;
 
 	public String getHost();
 
-	public long getLastModified();
+	public long getLastModified() throws IOException;
 
 	public int getPort();
 
@@ -95,14 +95,14 @@ public interface HttpConnection extends ContentConnection
 
 	public String getRequestProperty(String key);
 
-	public int getResponseCode();
+	public int getResponseCode() throws IOException;
 
-	public String getResponseMessage();
+	public String getResponseMessage() throws IOException;
 
 	public String getURL();
 
-	public void setRequestMethod(String method);
+	public void setRequestMethod(String method) throws IOException;
 
-	public void setRequestProperty(String key, String value);
+	public void setRequestProperty(String key, String value) throws IOException;
 
 }

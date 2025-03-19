@@ -15,13 +15,13 @@
 	along with FreeJ2ME.  If not, see http://www.gnu.org/licenses/
 */
 package javax.microedition.io;
-
+import java.io.IOException;
 
 public interface ServerSocketConnection extends StreamConnectionNotifier
 {
 
-	public String getLocalAddress();
+	public String getLocalAddress() throws IOException;
 
-	public int getLocalPort();
+	public int getLocalPort() throws IOException;
 
 }

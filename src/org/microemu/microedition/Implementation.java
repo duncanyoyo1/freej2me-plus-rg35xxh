@@ -24,14 +24,14 @@
  *
  * @version $Id$
  */
-package javax.microedition.io.file;
+package org.microemu.microedition;
 
-public interface FileSystemListener {
+/**
+ * This a flag to indicate that class is Implementation.
+ *
+ * @author vlads
+ */
+public interface Implementation {
 
-	public static final int ROOT_ADDED = 0;
-
-	public static final int ROOT_REMOVED = 1;
-
-	public abstract void rootChanged(int i, String s);
 
 }

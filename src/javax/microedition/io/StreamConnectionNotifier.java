@@ -15,10 +15,10 @@
 	along with FreeJ2ME.  If not, see http://www.gnu.org/licenses/
 */
 package javax.microedition.io;
-
+import java.io.IOException;
 public interface StreamConnectionNotifier extends Connection
 {
 
-	public StreamConnection acceptAndOpen();
+	public StreamConnection acceptAndOpen() throws IOException;
 
 }

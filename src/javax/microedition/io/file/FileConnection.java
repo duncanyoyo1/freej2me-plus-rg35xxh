@@ -1,97 +1,105 @@
-/*
-	This file is part of FreeJ2ME.
-
-	FreeJ2ME is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	FreeJ2ME is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with FreeJ2ME.  If not, see http://www.gnu.org/licenses/
-*/
+/**
+ * MicroEmulator
+ * Copyright (C) 2006-2007 Bartek Teodorczyk <barteo@barteo.net>
+ * Copyright (C) 2006-2007 Vlad Skarzhevskyy
+ * <p>
+ * It is licensed under the following two licenses as alternatives:
+ * 1. GNU Lesser General Public License (the "LGPL") version 2.1 or any newer version
+ * 2. Apache License (the "AL") Version 2.0
+ * <p>
+ * You may not use this file except in compliance with at least one of
+ * the above two licenses.
+ * <p>
+ * You may obtain a copy of the LGPL at
+ * http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt
+ * <p>
+ * You may obtain a copy of the AL at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the LGPL or the AL for the specific language governing permissions and
+ * limitations.
+ *
+ * @version $Id$
+ */
 package javax.microedition.io.file;
 
-import java.io.IOException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Enumeration;
 
 import javax.microedition.io.StreamConnection;
 
-public interface FileConnection extends StreamConnection 
-{
+public interface FileConnection extends StreamConnection {
 
-    long availableSize() throws SecurityException, IllegalModeException, ConnectionClosedException;
+	public abstract boolean isOpen();
 
-    boolean canRead() throws SecurityException, IllegalModeException, ConnectionClosedException;
+	@Override
+	public abstract InputStream openInputStream() throws IOException;
 
-    boolean canWrite() throws SecurityException, IllegalModeException, ConnectionClosedException;
+	@Override
+	public abstract DataInputStream openDataInputStream() throws IOException;
 
-    void create() throws IOException, SecurityException, IllegalModeException;
+	@Override
+	public abstract OutputStream openOutputStream() throws IOException;
 
-    void delete() throws IOException, SecurityException, IllegalModeException, ConnectionClosedException;
+	@Override
+	public abstract DataOutputStream openDataOutputStream() throws IOException;
 
-    long directorySize(boolean includeSubDirs) throws IOException, SecurityException, IllegalModeException, ConnectionClosedException;
+	public abstract OutputStream openOutputStream(long byteOffset) throws IOException;
 
-    boolean exists() throws SecurityException, IllegalModeException, ConnectionClosedException;
+	public abstract long totalSize();
 
-    long fileSize() throws IOException, SecurityException, IllegalModeException, ConnectionClosedException;
+	public abstract long availableSize();
 
-    String getName();
+	public abstract long usedSize();
 
-    String getPath();
+	public abstract long directorySize(boolean includeSubDirs) throws IOException;
 
-    String getURL();
+	public abstract long fileSize() throws IOException;
 
-    boolean isDirectory() throws IOException, SecurityException, IllegalModeException, ConnectionClosedException;
+	public abstract boolean canRead();
 
-    boolean isHidden() throws SecurityException, IllegalModeException, ConnectionClosedException;
+	public abstract boolean canWrite();
 
-    boolean isOpen();
-    
-    long lastModified() throws SecurityException, IllegalModeException, ConnectionClosedException;
+	public abstract boolean isHidden();
 
-    Enumeration list() throws IOException, SecurityException, IllegalModeException, ConnectionClosedException;
+	public abstract void setReadable(boolean readable) throws IOException;
 
-    Enumeration list(String filter, boolean includeHidden) throws NullPointerException, IllegalArgumentException, IOException, SecurityException, IllegalModeException, ConnectionClosedException;
+	public abstract void setWritable(boolean writable) throws IOException;
 
-    void mkdir() throws IOException, SecurityException, IllegalModeException, ConnectionClosedException;
+	public abstract void setHidden(boolean hidden) throws IOException;
 
-    @Override 
-    DataInputStream openDataInputStream() throws SecurityException, IllegalModeException;
+	public abstract Enumeration list() throws IOException;
 
-    @Override
-    DataOutputStream openDataOutputStream() throws SecurityException, IllegalModeException;
+	public abstract Enumeration list(String filter, boolean includeHidden) throws IOException;
 
-    @Override
-    InputStream openInputStream() throws SecurityException, IllegalModeException;
+	public abstract void create() throws IOException;
 
-    @Override
-    OutputStream openOutputStream() throws SecurityException, IllegalModeException;
+	public abstract void mkdir() throws IOException;
 
-    OutputStream openOutputStream(long byteOffset) throws IOException, SecurityException, IllegalModeException, IllegalArgumentException;
+	public abstract boolean exists();
 
-    void rename(String newName) throws IOException, SecurityException, IllegalModeException, ConnectionClosedException, NullPointerException, IllegalArgumentException;
+	public abstract boolean isDirectory();
 
-    void setFileConnection(String fileName) throws IOException, SecurityException, NullPointerException, IllegalArgumentException;
+	public abstract void delete() throws IOException;
 
-    void setHidden(boolean hidden) throws IOException, SecurityException, IllegalModeException, ConnectionClosedException;
+	public abstract void rename(String newName) throws IOException;
 
-    void setReadable(boolean readable) throws IOException, SecurityException, IllegalModeException, ConnectionClosedException;
+	public abstract void truncate(long byteOffset) throws IOException;
 
-    void setWritable(boolean writable) throws IOException, SecurityException, IllegalModeException, ConnectionClosedException;
+	public abstract void setFileConnection(String s) throws IOException;
 
-    long totalSize() throws SecurityException, IllegalModeException, ConnectionClosedException;
+	public abstract String getName();
 
-    void truncate(long byteOffset) throws IOException, SecurityException, IllegalModeException, ConnectionClosedException, IllegalArgumentException;
+	public abstract String getPath();
 
-    long usedSize() throws SecurityException, IllegalModeException, ConnectionClosedException;
+	public abstract String getURL();
 
+	public abstract long lastModified();
 }
