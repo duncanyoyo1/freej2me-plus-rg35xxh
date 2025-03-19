@@ -1,29 +1,28 @@
 /*
-	This file is part of FreeJ2ME.
+ * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
+ * All rights reserved.
+ * This component and the accompanying materials are made available
+ * under the terms of "Eclipse Public License v1.0"
+ * which accompanies this distribution, and is available
+ * at the URL "http://www.eclipse.org/legal/epl-v10.html".
+ *
+ * Initial Contributors:
+ * Nokia Corporation - initial contribution.
+ *
+ * Contributors:
+ *
+ * Description:
+ *
+ */
 
-	FreeJ2ME is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	FreeJ2ME is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with FreeJ2ME.  If not, see http://www.gnu.org/licenses/
-*/
 package javax.microedition.m3g;
 
-import org.recompile.mobile.PlatformGraphics;
-import org.recompile.mobile.PlatformImage;
-import java.awt.image.Raster;
+import javax.microedition.lcdui.Image;
 
-import org.recompile.mobile.Mobile;
-
-public class Image2D extends Object3D
-{
+public class Image2D extends Object3D {
+	//------------------------------------------------------------------
+	// Static data
+	//------------------------------------------------------------------
 
 	public static final int ALPHA = 96;
 	public static final int LUMINANCE = 97;
@@ -31,216 +30,72 @@ public class Image2D extends Object3D
 	public static final int RGB = 99;
 	public static final int RGBA = 100;
 
+	static long tempHandle;
 
-	private byte[] image;
-	private int width;
-	private int height;
-	private int format;
-	private boolean mutable;
+	//------------------------------------------------------------------
+	// Constructor(s)
+	//------------------------------------------------------------------
 
-	public static final String[] formatNames = {"ALPHA", "LUMINANCE", "LUMINANCE_ALPHA", "RGB", "RGBA"};
-
-	public Image2D(int format, int w, int h)
-	{
-		this.mutable = true;
-		this.width = w;
-		this.height = h;
-		this.format = format;
+	public Image2D(int format, Object image) {
+		// If image is instance of lcdui.Image then checkAndCreate
+		// builds the image and returns the handle to native image,
+		// otherwise throws exception Done this way because class of
+		// image cannot be checked befor calling super()
+		super(Image2D.checkAndCreate(format, image));
 	}
 
-	public Image2D(int format, int w, int h, byte[] image)
-	{
-		/* As per JSR-184, throw NullPointerException if the received image is null. */
-		if (image == null) { throw new NullPointerException("Tried to construct Image2D with null image. "); }
-		
-		/* Also per JSR-184, throw IllegalArgumentException if format is not one of the constants. */
-		if (format != ALPHA && format != LUMINANCE && format != LUMINANCE_ALPHA && format != RGB && format != RGBA)
-			{ throw new IllegalArgumentException("Invalid image format received."); } 
-
-		/* Also per JSR-184, throw IllegalArgumentException if w or h <= 0*/
-		if (w <=0 || h <= 0) { throw new IllegalArgumentException("Image has invalid width and/or height."); }
-
-		Mobile.log(Mobile.LOG_DEBUG, Image2D.class.getPackage().getName() + "." + Image2D.class.getSimpleName() + ": " +  "M3G Byte Image Format: " + formatNames[format-96]);
-		
-		this.mutable = false;
-		this.width = w;
-		this.height = h;
-		this.format = format;
-		this.image = image;
+	public Image2D(int format, int width, int height, byte[] image) {
+		super(createHandle(format, width, height, image));
 	}
 
-	public Image2D(int format, int w, int h, byte[] image, byte[] palette)
-	{
-		/* As per JSR-184, throw NullPointerException if the received image is null. */
-		if (image == null) { throw new NullPointerException("Tried to construct Image2D with null image. "); }
-		
-		/* Also per JSR-184, throw IllegalArgumentException if format is not one of the constants. */
-		if (format != ALPHA && format != LUMINANCE && format != LUMINANCE_ALPHA && format != RGB && format != RGBA)
-			{ throw new IllegalArgumentException("Invalid image format received."); } 
+	public Image2D(int format,
+				   int width, int height,
+				   byte[] image,
+				   byte[] palette) {
+		super(createHandle(format, width, height, image, palette));
+	}
 
-		/* Also per JSR-184, throw IllegalArgumentException if w or h <= 0*/
-		if (w <=0 || h <= 0) { throw new IllegalArgumentException("Image has invalid width and/or height."); }
+	public Image2D(int format, int width, int height) {
+		super(createHandle(format, width, height));
+	}
 
-		/* 
-		 * Also per JSR-184, throw IllegalArgumentException if (palette.length < 256*C) && ((palette.length % C) != 0), 
-		 * where C is the number of color components (for instance, 3 for RGB). 
-		 */
-		this.format = format; // bpp() uses the format to ascertain the bytes per pixel, so we have to set it before the check
+	Image2D(long handle) {
+		super(handle);
+	}
 
-		if(palette.length < 256 * this.bpp() && ((palette.length % this.bpp()) != 0)) 
-			{ throw new IllegalArgumentException("Illegal palette length received."); }
+	//------------------------------------------------------------------
+	// Public methods
+	//------------------------------------------------------------------
 
-		Mobile.log(Mobile.LOG_DEBUG, Image2D.class.getPackage().getName() + "." + Image2D.class.getSimpleName() + ": " +  "M3G Paletted Image Format: " + formatNames[format-96] + " indices len: " + image.length + " palette len:" + palette.length);
-
-		this.mutable = false;
-		this.width = w;
-		this.height = h;
-		
-		// We now start to copy the received "image" comprised of palette indices, as well as the palette colors themselves.
-		this.image = new byte[image.length * bpp()];
-		for(int i = 0; i < image.length; i++)  
-		{
-			for(int k = 0; k < bpp(); k++) // The pallete will be 256 entries multiplied by the format's amount of bytes per pixel
-			{
-				/* 
-				 * Due to that, we get its data by reading the received image[] multiplied by bpp. Also, those values 
-				 * are unsigned (as there will be 256 entries in the palette), while java treats its native types
-				 * as signed. So we are required to do that bitwise AND operation to make them unsigned when reading
-				*/
-				this.image[i * bpp() + k] = (byte) (palette[(image[i] & 0xFF) * bpp() + k] & 0xFF);
-			}
+	public void set(int x, int y, int width, int height, byte[] image) {
+		if (image == null) {
+			throw new NullPointerException();
 		}
+		_set(handle, x, y, width, height, image);
 	}
 
-	public Image2D(int format, Object image)
-	{
-		/* As per JSR-184, throw NullPointerException if the received image is null. */
-		if (image == null) { throw new NullPointerException("Tried to construct Image2D with null image. "); }
-		
-		/* Also per JSR-184, throw IllegalArgumentException if format is not one of the constants. */
-		if (format != ALPHA && format != LUMINANCE && format != LUMINANCE_ALPHA && format != RGB && format != RGBA)
-			{ throw new IllegalArgumentException("Invalid image format received."); } 
-
-		/* Also per JSR-184, throw IllegalArgumentException if image is not a valid instance of the supported Image classes. */
-		if (!(image instanceof javax.microedition.lcdui.Image) && !(image instanceof java.awt.Image)) 
-			{ throw new IllegalArgumentException("The image object received is not appropriate to this implementation."); }
-
-		Raster img = ((PlatformImage) image).getCanvas().getData();
-		int bppSrc = img.getNumBands();
-		int[] buf = new int[bppSrc];
-
-		Mobile.log(Mobile.LOG_DEBUG, Image2D.class.getPackage().getName() + "." + Image2D.class.getSimpleName() + ": " +  "M3G Image Format:" + formatNames[format-96]);
-
-		this.mutable = false;
-		this.width = img.getWidth();
-		this.height = img.getHeight();
-		this.format = format;
-		int bpp = this.bpp();
-		this.image = new byte[this.width * this.height * bpp];
-
-		for (int row = 0; row < this.height; row++) 
-		{
-			for (int col = 0; col < this.width; col++)
-			{
-				img.getPixel(col, row, buf);
-				for (int ch = 0; ch < bpp; ch++)
-				{
-					this.image[bpp * (this.width * row + col) + ch] =
-						(byte) buf[ch % bppSrc];
-				}
-			}
-		}
+	public boolean isMutable() {
+		return _isMutable(handle);
 	}
 
-
-	public int getFormat() { return this.format; }
-
-	public int getHeight() { return this.height; }
-
-	public int getWidth() { return this.width; }
-
-	public boolean isMutable() { return this.mutable; }
-
-	public void set(int x, int y, int w, int h, byte[] image)
-	{
-		/* As per JSR-184, throw...
-		 * NullPointerException if the received image is null.
-		 * IllegalStateException if this Image2D object is immutable.
-		 * IllegalStateException if x < 0 or y < 0 or width <= 0 or height <= 0
-		 * IllegalStateException if image.length < (width * height * bpp)
-		 */
-		if (image == null) { throw new java.lang.NullPointerException("Received null image."); }
-		if (!this.mutable) { throw new java.lang.IllegalStateException("This Image2D object is not mutable."); }
-		if (x < 0 || y < 0 || w <= 0 || h <= 0 ||
-			x + w > this.width || y + h > this.height ||
-			image.length < w * h * this.bpp())
-			{ throw new java.lang.IllegalArgumentException("Tried to set image with invalid parameters."); }
-
-		for (int i = 0; i < w; i++)
-		{ 
-			for (int j = 0; j < h; j++) { this.image[this.width * (y + j) + (x + i)] = image[j * w + i]; }
-		}
+	public int getFormat() {
+		return _getFormat(handle);
 	}
 
-	int getPixel(int x, int y)
-	{
-		x = ((x % this.width) + this.width) % this.width;
-		y = ((y % this.height) + this.height) % this.height;
-		int offset = this.bpp() * (this.width * y + x);
-		int result = 0;
-
-		for (int ch = 0; ch < this.bpp(); ch++) 
-		{ 
-			result |= this.image[offset + ch] << (8 * (this.bpp() - ch - 1));
-		}
-
-		return result;
+	public int getWidth() {
+		return _getWidth(handle);
 	}
 
-	int getConvertedPixel(int x, int y) 
-	{
-		x = ((x % this.width) + this.width) % this.width;
-		y = ((y % this.height) + this.height) % this.height;
-		int offset = this.bpp() * (this.width * y + x);
-		int result = 0;
-	
-		switch (this.format) 
-		{
-			case ALPHA: // TODO: Untested
-				result = (this.image[offset] & 0xFF) << 24 | (0xFF << 16) | (0xFF << 8) | 0xFF; // Alpha only, to ARGB
-				break;
-			case LUMINANCE: // TODO: Untested
-				int luminance = this.image[offset] & 0xFF; // Grayscale value
-				result = (0xFF << 24) | (luminance << 16) | (luminance << 8) | luminance; // Cast to ARGB
-				break;
-			case LUMINANCE_ALPHA:
-				int lum = this.image[offset] & 0xFF; // Luminance
-				int alpha = this.image[offset + 1] & 0xFF; // Alpha
-				result = (alpha << 24) | (lum << 16) | (lum << 8) | lum; // Cast to ARGB
-				break;
-			case RGB:
-				result |= 0xFF << 24; // Full alpha
-				result |= (this.image[offset] & 0xFF) << 16; // Red
-				result |= (this.image[offset + 1] & 0xFF) << 8; // Green
-				result |= (this.image[offset + 2] & 0xFF); // Blue
-				break;
-			case RGBA:
-				result |= (this.image[offset + 3] & 0xFF) << 24; // Alpha
-				result |= (this.image[offset] & 0xFF) << 16; // Red
-				result |= (this.image[offset + 1] & 0xFF) << 8; // Green
-				result |= (this.image[offset + 2] & 0xFF); // Blue
-				break;
-			default:
-				throw new IllegalArgumentException("Unsupported format: " + this.format);
-		}
-	
-		return result;
+	public int getHeight() {
+		return _getHeight(handle);
 	}
 
-	private int bpp()
-	{
-		switch (this.format)
-		{
+	//------------------------------------------------------------------
+	// Private methods
+	//------------------------------------------------------------------
+
+	private static int getBytesPerPixel(int format) {
+		switch (format) {
 			case ALPHA:
 				return 1;
 			case LUMINANCE:
@@ -252,7 +107,162 @@ public class Image2D extends Object3D
 			case RGBA:
 				return 4;
 			default:
-				return 0;
+				throw new RuntimeException("Invalid format on image");
 		}
 	}
+
+	private static long checkAndCreate(int format, Object image) {
+		if (image == null) {
+			throw new NullPointerException();
+		}
+		if (!(image instanceof Image)) {
+			throw new IllegalArgumentException();
+		}
+		Image cgfxImage = (Image) image;
+
+		final int finalFormat = format;
+		tempHandle = 0;
+
+		final int width = cgfxImage.getWidth();
+		final int height = cgfxImage.getHeight();
+		int[] argbArr = new int[width * height];
+		final byte[] byteArr = new byte[width * height * getBytesPerPixel(finalFormat)];
+
+		cgfxImage.getRGB(argbArr, 0, width, 0, 0, width, height);
+
+		int index = 0;
+		switch (format) {
+			case ALPHA:
+				if (cgfxImage.isMutable()){
+					for (int argb : argbArr) {
+						int r = argb >> 16 & 0xFF;
+						int g = argb >> 8 & 0xFF;
+						int b = argb & 0xFF;
+						byteArr[index++] = (byte) (0x4CB2 * r + 0x9691 * g + 0x1D3E * b >> 16);
+					}
+				} else {
+					for (int argb : argbArr) {
+						byteArr[index++] = ((byte) ((argb >> 24) & 0xFF));
+					}
+				}
+				break;
+			case LUMINANCE:
+				for (int argb : argbArr) {
+					int r = argb >> 16 & 0xFF;
+					int g = argb >> 8 & 0xFF;
+					int b = argb & 0xFF;
+					byteArr[index++] = (byte) (0x4CB2 * r + 0x9691 * g + 0x1D3E * b >> 16);
+				}
+				break;
+			case LUMINANCE_ALPHA:
+				for (int argb : argbArr) {
+					int r = argb >> 16 & 0xFF;
+					int g = argb >> 8 & 0xFF;
+					int b = argb & 0xFF;
+					byteArr[index++] = (byte) (0x4CB2 * r + 0x9691 * g + 0x1D3E * b >> 16);
+					byteArr[index++] = ((byte) ((argb >> 24) & 0xFF));
+				}
+				break;
+			case RGB:
+				for (int argb : argbArr) {
+					byteArr[index++] = ((byte) ((argb >> 16) & 0xFF));
+					byteArr[index++] = ((byte) ((argb >> 8) & 0xFF));
+					byteArr[index++] = ((byte) ((argb) & 0xFF));
+				}
+				break;
+			case RGBA:
+				for (int argb : argbArr) {
+					byteArr[index++] = ((byte) ((argb >> 16) & 0xFF));
+					byteArr[index++] = ((byte) ((argb >> 8) & 0xFF));
+					byteArr[index++] = ((byte) ((argb) & 0xFF));
+					byteArr[index++] = ((byte) ((argb >> 24) & 0xFF));
+				}
+				break;
+		}
+
+		/* tempHandle = createHandle(finalFormat, width, height, byteArr); */
+		// excute in UI thread
+		Platform.executeInUIThread(
+				new M3gRunnable() {
+					@Override
+					void doRun() {
+						tempHandle = createHandle(finalFormat, width, height, byteArr);
+					}
+				});
+		return tempHandle;
+	}
+
+	//Platform.heuristicGC();
+	//ToolkitInvoker invoker = ToolkitInvoker.getToolkitInvoker();
+
+	// Decide if trueAlpha
+	//Image i = (Image)image;
+	//boolean trueAlpha = !(i.isMutable() && format == ALPHA);
+
+	//Platform.sync((Image) image);
+
+//        Platform.getUIThread().syncExec(
+//                    new Runnable() {
+//                        public void run() {
+//                                               tempHandle = _ctorImage(/*Interface.getEventSourceHandle(),*/ Interface.getHandle(), finalFormat, /*invoker.imageGetHandle(image)*/ 5);
+//                                          }
+//                                  });
+//          return tempHandle;
+
+
+	private static long createHandle(int format, int width, int height, byte[] image) {
+		Platform.heuristicGC();
+		return _ctorSizePixels(Interface.getHandle(),
+				format,
+				width, height,
+				image);
+	}
+
+	private static long createHandle(int format,
+									int width, int height,
+									byte[] image,
+									byte[] palette) {
+		Platform.heuristicGC();
+		return _ctorSizePixelsPalette(Interface.getHandle(),
+				format,
+				width, height,
+				image, palette);
+	}
+
+	private static long createHandle(int format, int width, int height) {
+		Platform.heuristicGC();
+		return _ctorSize(Interface.getHandle(), format, width, height);
+	}
+
+	// Native methods
+/*	private native static long _ctorImage(*//*int eventSourceHandle,*//*
+			long hInterface,
+			int format,
+			long imageHandle);*/
+
+	private native static long _ctorSizePixels(long hInterface,
+											  int format,
+											  int width, int height,
+											  byte[] image);
+
+	private native static long _ctorSizePixelsPalette(long hInterface,
+													 int format,
+													 int width, int height,
+													 byte[] image,
+													 byte[] palette);
+
+	private native static long _ctorSize(long hInterface,
+										int format,
+										int width, int height);
+
+	private native static void _set(long handle, int x, int y, int width,
+									int height, byte[] image);
+
+	private native static boolean _isMutable(long handle);
+
+	private native static int _getFormat(long handle);
+
+	private native static int _getWidth(long handle);
+
+	private native static int _getHeight(long handle);
 }

@@ -1,202 +1,148 @@
 /*
-	This file is part of FreeJ2ME.
+ * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
+ * All rights reserved.
+ * This component and the accompanying materials are made available
+ * under the terms of "Eclipse Public License v1.0"
+ * which accompanies this distribution, and is available
+ * at the URL "http://www.eclipse.org/legal/epl-v10.html".
+ *
+ * Initial Contributors:
+ * Nokia Corporation - initial contribution.
+ *
+ * Contributors:
+ *
+ * Description:
+ *
+ */
 
-	FreeJ2ME is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	FreeJ2ME is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with FreeJ2ME.  If not, see http://www.gnu.org/licenses/
-*/
 package javax.microedition.m3g;
 
-public class VertexBuffer extends Object3D
-{
+public class VertexBuffer extends Object3D {
+	//------------------------------------------------------------------
+	// Instance data
+	//------------------------------------------------------------------
 
-	// The `fixed` field represents whether or not the vertex count (`length`)
-	// of this `VertexBuffer` has been determined.
-	//
-	// The first `VertexArray` added to this `VertexBuffer` makes
-	// it "fixed", and the `length` will be set to the number
-	// of vertices in the `VertexArray`.
-	//
-	// Once the `VertexBuffer` is fixed, it only accepts `VertexArray`s
-	// with exactly `length` vertices.
-	private boolean fixed;
-	private int length;
-	private int defaultColor;
 	private VertexArray positions;
 	private VertexArray normals;
-	private VertexArray colors = null;
+	private VertexArray colors;
 	private VertexArray[] texCoords;
 
-	private float positionScale;
-	private float[] positionBias;
-	private float[] texCoordScale;
-	private float[][] texCoordBias;
-	// colorScale =   1/255
-	// colorBias  = 128/255
+	//------------------------------------------------------------------
+	// Constructors
+	//------------------------------------------------------------------
 
-
-	public VertexBuffer()
-	{
-		this.fixed = false;
-		this.length = 0;
-		this.defaultColor = 0xffffffff;
-		this.positions = null;
-		this.normals = null;
-		this.colors = null;
-		this.texCoords = new VertexArray[Graphics3D.NUM_TEXTURE_UNITS];
-		this.texCoordScale = new float[Graphics3D.NUM_TEXTURE_UNITS];
-		this.texCoordBias = new float[Graphics3D.NUM_TEXTURE_UNITS][0];
+	public VertexBuffer() {
+		super(_ctor(Interface.getHandle()));
 	}
 
+	/**
+	 */
+	VertexBuffer(long handle) {
+		super(handle);
 
-	public VertexArray getColors() { return this.colors; }
+		positions = (VertexArray) getInstance(_getArray(handle, Defs.GET_POSITIONS, null));
+		normals = (VertexArray) getInstance(_getArray(handle, Defs.GET_NORMALS, null));
+		colors = (VertexArray) getInstance(_getArray(handle, Defs.GET_COLORS, null));
 
-	public int getDefaultColor() { return this.defaultColor; }
-
-	public VertexArray getNormals() { return this.normals; }
-
-	public VertexArray getPositions(float[] scaleBias)
-	{
-		if (scaleBias != null)
-		{
-			/* As per JSR-184, throw IllegalArgumentException if (scaleBias != null) && (scaleBias.length < 4). */
-			if(scaleBias.length < 4) { throw new IllegalArgumentException("ScaleBias has invalid length (less than 4)."); }
-			
-			scaleBias[0] = this.positionScale;
-			for (int i = 0; i < 3; i++)
-				scaleBias[i + 1] = this.positionBias[i];
-		}
-		return this.positions;
-	}
-
-	public VertexArray getTexCoords(int index, float[] scaleBias)
-	{
-		/* As per JSR-184, throw IndexOutOfBoundsException if index != [0,N] where N is the implementation specific maximum texturing unit index*/
-		if (index < 0 || Graphics3D.NUM_TEXTURE_UNITS - 1 < index)
-			{ throw new IndexOutOfBoundsException("Tried to access invalid texture unit index."); }
-
-		if (scaleBias != null && this.texCoords[index] != null)
-		{
-			/* Also per JSR-184, throw IllegalArgumentException if (scaleBias != null) && (scaleBias.length < texCoords.getComponentCount+1). */
-			if (scaleBias.length < this.texCoords[index].getComponentCount() + 1)
-				{ throw new IllegalArgumentException("Invalid scaleBias length."); }
-
-			scaleBias[0] = this.texCoordScale[index];
-			for (int i = 0; i < this.texCoords[index].getComponentCount(); i++)
-				{ scaleBias[i + 1] = this.texCoordBias[index][i]; }
-		}
-		return this.texCoords[index];
-	}
-
-	public int getVertexCount() { return this.length; }
-
-	public void setColors(VertexArray colors)
-	{
-		if (colors == null) { this.colors = null; } 
-		else
-		{
-			/* 
-			 * As per JSR-184, throw IllegalArgumentException if: 
-			 * (colors != null) && (colors.getComponentType != 1)
-			 * (colors != null) && (colors.getComponentCount != {3,4})
-			 * (colors != null) && (colors.getVertexCount != getVertexCount) && (at least one other VertexArray is set)
-			 */
-			if (colors.getComponentType() != 1 || colors.getComponentCount() < 3 || 4 < colors.getComponentCount() || (this.fixed && colors.getVertexCount() != this.length))
-				{ throw new IllegalArgumentException("Trying to set colors with invalid context."); }
-
-			this.updateLength(colors.getVertexCount());
-			this.colors = colors;
+		texCoords = new VertexArray[Defs.NUM_TEXTURE_UNITS];
+		for (int i = 0; i < Defs.NUM_TEXTURE_UNITS; ++i) {
+			texCoords[i] =
+					(VertexArray) getInstance(_getArray(handle, Defs.GET_TEXCOORDS0 + i, null));
 		}
 	}
 
-	public void setDefaultColor(int ARGB) { this.defaultColor = ARGB; }
+	//------------------------------------------------------------------
+	// Public methods
+	//------------------------------------------------------------------
 
-	public void setNormals(VertexArray normals)
-	{
-		if (normals == null) { this.normals = null; }
-		else
-		{
-			/* 
-			 * As per JSR-184, throw IllegalArgumentException if: 
-			 * (normals != null) && (normals.getComponentCount != 3)
-			 * (normals != null) && (normals.getVertexCount != getVertexCount) && (at least one other VertexArray is set)
-			 */
-			if (normals.getComponentCount() != 3 || (this.fixed && normals.getVertexCount() != this.length))
-				{ throw new IllegalArgumentException("Trying to set colors with invalid context."); }
-
-			this.updateLength(normals.getVertexCount());
-			this.normals = normals;
-		}
+	public int getVertexCount() {
+		return _getVertexCount(handle);
 	}
 
-	public void setPositions(VertexArray positions, float scale, float[] bias)
-	{
-		if (positions == null) { this.positions = null; }
-		else
-		{
-			/* 
-			 * As per JSR-184, throw IllegalArgumentException if:
-			 * (positions != null) && (positions.getComponentCount != 3
-			 * (positions != null) && (positions.getVertexCount != getVertexCount) && (at least one other VertexArray is set)
-			 * (positions != null) && (bias != null) && (bias.length < 3)
-			 */
-			if (positions.getComponentCount() != 3 || (this.fixed && positions.getVertexCount() != this.length) || (bias != null && bias.length < 3))
-				{ throw new IllegalArgumentException("Trying to set positions with invalid context."); }
-
-			if (bias == null) { bias = new float[3]; }
-
-			this.updateLength(positions.getVertexCount());
-			this.positions = positions;
-			this.positionScale = scale;
-			this.positionBias = bias;
-		}
+	public void setPositions(VertexArray positions, float scale, float[] bias) {
+		_setVertices(handle,
+				(positions != null) ? positions.handle : 0,
+				scale,
+				bias);
+		this.positions = positions;
 	}
 
-	public void setTexCoords( int index, VertexArray texCoords, float scale, float[] bias) 
-	{
-		/* As per JSR-184, throw IndexOutOfBoundsException if if index != [0,N] where N is the implementation specific maximum texturing unit index. */
-		if (index < 0 || Graphics3D.NUM_TEXTURE_UNITS - 1 < index)
-			{ throw new IndexOutOfBoundsException("Tried to access invalid texture unit index."); }
+	public void setTexCoords(int index, VertexArray texCoords, float scale, float[] bias) {
+		_setTexCoords(handle,
+				index,
+				texCoords != null ? texCoords.handle : 0,
+				scale,
+				bias);
 
-		if (texCoords == null) { this.texCoords[index] = null; }
-		else
-		{
-			int componentCount = texCoords.getComponentCount();
-
-			/* 
-			 * Also per JSR-184, throw IllegalArgumentException if:
-			 * (texCoords != null) && (texCoords.getComponentCount != {2,3})
-			 * (texCoords != null) && (texCoords.getVertexCount != getVertexCount) && (at least one other VertexArray is set)
-			 * (texCoords != null) && (bias != null) && (bias.length < texCoords.getComponentCount)
-			 */
-			if (componentCount < 2 || 3 < componentCount || (this.fixed && texCoords.getVertexCount() != this.length) || (bias != null && bias.length < componentCount))
-				{ throw new IllegalArgumentException("Trying to set Texture Coordinates with invalid context."); }
-
-			if (bias == null) { bias = new float[componentCount]; }
-
-			this.updateLength(texCoords.getVertexCount());
-			this.texCoords[index] = texCoords;
-			this.texCoordScale[index] = scale;
-			this.texCoordBias[index] = bias;
+		if (this.texCoords == null) {
+			this.texCoords = new VertexArray[Defs.NUM_TEXTURE_UNITS];
 		}
+		this.texCoords[index] = texCoords;
 	}
 
-	private void updateLength(int length)
-	{
-		if (!this.fixed)
-		{
-			this.fixed = true;
-			this.length = length;
-		}
+	public void setNormals(VertexArray normals) {
+		_setNormals(handle, normals != null ? normals.handle : 0);
+		this.normals = normals;
 	}
 
+	public void setColors(VertexArray colors) {
+		_setColors(handle, colors != null ? colors.handle : 0);
+		this.colors = colors;
+	}
+
+	public VertexArray getPositions(float[] scaleBias) {
+		/* Get scale and bias with native getter */
+		_getArray(handle, Defs.GET_POSITIONS, scaleBias);
+		return positions;
+	}
+
+	public VertexArray getTexCoords(int index, float[] scaleBias) {
+		/* Index has to be checked here due to the native getter input params */
+		if (index < 0 || index >= Defs.NUM_TEXTURE_UNITS) {
+			throw new IndexOutOfBoundsException();
+		}
+
+		/* Get scale and bias with native getter */
+		_getArray(handle, Defs.GET_TEXCOORDS0 + index, scaleBias);
+		return texCoords != null ? texCoords[index] : null;
+	}
+
+	public VertexArray getNormals() {
+		return normals;
+	}
+
+	public VertexArray getColors() {
+		return colors;
+	}
+
+	public void setDefaultColor(int ARGB) {
+		_setDefaultColor(handle, ARGB);
+	}
+
+	public int getDefaultColor() {
+		return _getDefaultColor(handle);
+	}
+
+	//------------------------------------------------------------------
+	// Private methods
+	//------------------------------------------------------------------
+
+	// Native methods
+	private static native long _ctor(long hInterface);
+
+	private static native void _setColors(long hBuffer, long hArray);
+
+	private static native void _setNormals(long hBuffer, long hArray);
+
+	private static native void _setTexCoords(long hBuffer, int unit, long hArray, float scale, float[] bias);
+
+	private static native void _setVertices(long hBuffer, long hArray, float scale, float[] bias);
+
+	private static native void _setDefaultColor(long hBuffer, int ARGB);
+
+	private static native int _getDefaultColor(long hBuffer);
+
+	private static native long _getArray(long hBuffer, int which, float[] scaleBias);
+
+	private static native int _getVertexCount(long hBuffer);
 }

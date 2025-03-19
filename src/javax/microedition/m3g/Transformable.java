@@ -1,160 +1,121 @@
 /*
-	This file is part of FreeJ2ME.
+ * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
+ * All rights reserved.
+ * This component and the accompanying materials are made available
+ * under the terms of "Eclipse Public License v1.0"
+ * which accompanies this distribution, and is available
+ * at the URL "http://www.eclipse.org/legal/epl-v10.html".
+ *
+ * Initial Contributors:
+ * Nokia Corporation - initial contribution.
+ *
+ * Contributors:
+ *
+ * Description:
+ *
+ */
 
-	FreeJ2ME is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	FreeJ2ME is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with FreeJ2ME.  If not, see http://www.gnu.org/licenses/
-*/
 package javax.microedition.m3g;
 
-public abstract class Transformable extends Object3D
-{
-	private Transform matrix = new Transform();
-	private Transform scale = new Transform();
-	private Transform rotate = new Transform();
-	private Transform translate = new Transform();
+/**
+ *
+ */
+public abstract class Transformable extends Object3D {
+	//------------------------------------------------------------------
+	// Constructor(s)
+	//------------------------------------------------------------------
 
-	public void getCompositeTransform(Transform transform)
-	{
-		if (transform == null)
-			throw new java.lang.NullPointerException("Cannot copy composite transform data into a null transform.");
-
-		transform.setIdentity();
-		transform.preMultiply(this.matrix);
-		transform.preMultiply(this.scale);
-		transform.preMultiply(this.rotate);
-		transform.preMultiply(this.translate);
+	Transformable(long handle) {
+		super(handle);
 	}
 
-	public void getOrientation(float[] angleAxis)
-	{
-		if (angleAxis == null)
-			throw new java.lang.NullPointerException("Cannot copy orientation data into a null array.");
-		if (angleAxis.length < 4)
-			throw new java.lang.IllegalArgumentException();
+	//------------------------------------------------------------------
+	// Public methods
+	//------------------------------------------------------------------
 
-		float[] m = new float[16];
-		this.rotate.get(m);
-		float angle, ax, ay, az, al;
-		ax = m[4*2 + 1] - m[4*1 + 2];
-		ay = m[4*0 + 2] - m[4*2 + 0];
-		az = m[4*1 + 0] - m[4*0 + 1];
-		al = (float) Math.sqrt(
-			Math.pow(ax, 2) + Math.pow(ay, 2) + Math.pow(az, 2)
-		);
-		if (al == 0f)
-		{
-			angleAxis[0] = 0f;
-			angleAxis[1] = 0f;
-			angleAxis[2] = 0f;
-			angleAxis[3] = 0f;
-			return;
-		}
-		ax /= al; ay /= al; az /= al;
-		angle = (float) Math.toDegrees(Math.asin(al / 2));
-		angleAxis[0] = angle;
-		angleAxis[1] = ax;
-		angleAxis[2] = ay;
-		angleAxis[3] = az;
+
+	public void setOrientation(float angle, float ax, float ay, float az) {
+		_setOrientation(handle, angle, ax, ay, az, true);
 	}
 
-	public void getScale(float[] xyz)
-	{
-		if (xyz == null)
-			throw new java.lang.NullPointerException("Cannot copy scale data into a null array.");
-		if (xyz.length < 3)
-			throw new java.lang.IllegalArgumentException();
-
-		float[] m = new float[16];
-		this.scale.get(m);
-		xyz[0] = m[4*0 + 0];
-		xyz[1] = m[4*1 + 1];
-		xyz[2] = m[4*2 + 2];
+	public void postRotate(float angle, float ax, float ay, float az) {
+		_setOrientation(handle, angle, ax, ay, az, false);
 	}
 
-	public void getTransform(Transform transform)
-	{
-		if (transform == null)
-			throw new java.lang.NullPointerException("Cannot copy transform data into a null transform.");
-
-		transform.set(this.matrix);
+	public void preRotate(float angle, float ax, float ay, float az) {
+		_preRotate(handle, angle, ax, ay, az);
 	}
 
-	public void getTranslation(float[] xyz)
-	{
-		if (xyz == null)
-			throw new java.lang.NullPointerException("Cannot copy translation data into a null array.");
-		if (xyz.length < 3)
-			throw new java.lang.IllegalArgumentException();
-
-		float[] m = new float[16];
-		this.translate.get(m);
-		xyz[0] = m[4*0 + 3];
-		xyz[1] = m[4*1 + 3];
-		xyz[2] = m[4*2 + 3];
+	public void getOrientation(float[] angleAxis) {
+		_getOrientation(handle, angleAxis);
 	}
 
-	public void postRotate(float angle, float ax, float ay, float az)
-	{
-		this.rotate.postRotate(angle, ax, ay, az);
+	public void setScale(float sx, float sy, float sz) {
+		_setScale(handle, sx, sy, sz, true);
 	}
 
-	public void preRotate(float angle, float ax, float ay, float az)
-	{
-		this.rotate.preRotate(angle, ax, ay, az);
+	public void scale(float sx, float sy, float sz) {
+		_setScale(handle, sx, sy, sz, false);
 	}
 
-	public void scale(float sx, float sy, float sz)
-	{
-		this.scale.preScale(sx, sy, sz);
+	public void getScale(float[] xyz) {
+		_getScale(handle, xyz);
 	}
 
-	public void setOrientation(float angle, float ax, float ay, float az)
-	{
-		this.rotate.setIdentity();
-		this.rotate.preRotate(angle, ax, ay, az);
+	public void setTranslation(float tx, float ty, float tz) {
+		_setTranslation(handle, tx, ty, tz, true);
 	}
 
-	public void setScale(float sx, float sy, float sz)
-	{
-		this.scale.setIdentity();
-		this.scale.preScale(sx, sy, sz);
+	public void translate(float tx, float ty, float tz) {
+		_setTranslation(handle, tx, ty, tz, false);
 	}
 
-	public void setTransform(Transform transform)
-	{
-		if (transform == null)
-			transform = new Transform();
-
-		if (this instanceof Node)
-		{
-			float[] m = new float[16];
-			transform.get(m);
-			if (m[4*3+0] != 0 || m[4*3+1] != 0 || m[4*3+2] != 0 || m[4*3+3] != 1)
-				{ throw new java.lang.IllegalArgumentException(); }
-		}
-
-		this.matrix = new Transform(transform);
+	public void getTranslation(float[] xyz) {
+		_getTranslation(handle, xyz);
 	}
 
-	public void setTranslation(float tx, float ty, float tz)
-	{
-		this.translate.setIdentity();
-		this.translate.preTranslate(tx, ty, tz);
+	public void setTransform(Transform transform) {
+		_setTransform(handle, (transform != null) ? transform.matrix : null);
 	}
 
-	public void translate(float tx, float ty, float tz)
-	{
-		this.translate.preTranslate(tx, ty, tz);
+	public void getTransform(Transform transform) {
+		_getTransform(handle, transform.matrix);
 	}
 
+	public void getCompositeTransform(Transform transform) {
+		_getComposite(handle, transform.matrix);
+	}
+
+	//------------------------------------------------------------------
+	// Private methods
+	//------------------------------------------------------------------
+
+	private static native void _setOrientation(long handle,
+											   float angle,
+											   float ax, float ay, float az,
+											   boolean absolute);
+
+	private static native void _preRotate(long handle,
+										  float angle,
+										  float ax, float ay, float az);
+
+	private static native void _getOrientation(long handle, float[] angleAxis);
+
+	private static native void _setScale(long handle,
+										 float sx, float sy, float sz,
+										 boolean absolute);
+
+	private static native void _getScale(long handle, float[] scale);
+
+	private static native void _setTranslation(long handle,
+											   float tx, float ty, float tz,
+											   boolean absolute);
+
+	private static native void _getTranslation(long handle, float[] translation);
+
+	private static native void _setTransform(long handle, byte[] transform);
+
+	private static native void _getTransform(long handle, byte[] transform);
+
+	private static native void _getComposite(long handle, byte[] transform);
 }

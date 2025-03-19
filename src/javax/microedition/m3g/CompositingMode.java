@@ -1,24 +1,26 @@
 /*
-	This file is part of FreeJ2ME.
+ * Copyright (c) 2003 Nokia Corporation and/or its subsidiary(-ies).
+ * All rights reserved.
+ * This component and the accompanying materials are made available
+ * under the terms of "Eclipse Public License v1.0"
+ * which accompanies this distribution, and is available
+ * at the URL "http://www.eclipse.org/legal/epl-v10.html".
+ *
+ * Initial Contributors:
+ * Nokia Corporation - initial contribution.
+ *
+ * Contributors:
+ *
+ * Description:
+ *
+ */
 
-	FreeJ2ME is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	FreeJ2ME is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with FreeJ2ME.  If not, see http://www.gnu.org/licenses/
-*/
 package javax.microedition.m3g;
 
-
-public class CompositingMode extends Object3D
-{
+public class CompositingMode extends Object3D {
+	//------------------------------------------------------------------
+	// Static data
+	//------------------------------------------------------------------
 
 	public static final int ALPHA = 64;
 	public static final int ALPHA_ADD = 65;
@@ -26,114 +28,117 @@ public class CompositingMode extends Object3D
 	public static final int MODULATE_X2 = 67;
 	public static final int REPLACE = 68;
 
+	//------------------------------------------------------------------
+	// Constructors
+	//------------------------------------------------------------------
 
-	private int blending;
-	private float alphaThreshold;
-	private boolean alphaWrite;
-	private boolean depthWrite;
-	private boolean depthTest;
-	private float depthOffsetUnits;
-	private float depthOffsetFactor;
-	private boolean colorWrite;
-
-
-	public CompositingMode()
-	{
-			this.blending = REPLACE;
-			this.alphaThreshold = 0f;
-			this.depthOffsetUnits = 0f;
-			this.depthOffsetFactor = 0f;
-			this.depthTest = true;
-			this.depthWrite = true;
-			this.colorWrite = true;
-			this.alphaWrite = true;
+	public CompositingMode() {
+		super(_ctor(Interface.getHandle()));
 	}
 
-
-	public float getAlphaThreshold()
-	{
-		return this.alphaThreshold;
+	/**
+	 */
+	CompositingMode(long handle) {
+		super(handle);
 	}
 
-	public int getBlending()
-	{
-		return this.blending;
+	//------------------------------------------------------------------
+	// Public methods
+	//------------------------------------------------------------------
+
+	public void setBlending(int mode) {
+		_setBlending(handle, mode);
 	}
 
-	public float getDepthOffsetFactor()
-	{
-		return this.depthOffsetFactor;
+	public int getBlending() {
+		return _getBlending(handle);
 	}
 
-	public float getDepthOffsetUnits()
-	{
-		return this.depthOffsetUnits;
+	public void setAlphaThreshold(float threshold) {
+		_setAlphaThreshold(handle, threshold);
 	}
 
-	public boolean isAlphaWriteEnabled()
-	{
-		return this.alphaWrite;
+	public float getAlphaThreshold() {
+		return _getAlphaThreshold(handle);
 	}
 
-	public boolean isColorWriteEnabled()
-	{
-		return this.colorWrite;
+	public void setAlphaWriteEnable(boolean enable) {
+		_setAlphaWriteEnable(handle, enable);
 	}
 
-	public boolean isDepthTestEnabled()
-	{
-		return this.depthTest;
+	public boolean isAlphaWriteEnabled() {
+		return _isAlphaWriteEnabled(handle);
 	}
 
-	public boolean isDepthWriteEnabled()
-	{
-		return this.depthWrite;
+	public void setColorWriteEnable(boolean enable) {
+		_enableColorWrite(handle, enable);
 	}
 
-	public void setAlphaThreshold(float threshold)
-	{
-		if (threshold < 0 || 1 < threshold)
-			throw new java.lang.IllegalArgumentException();
-
-		this.alphaThreshold = threshold;
+	public boolean isColorWriteEnabled() {
+		return _isColorWriteEnabled(handle);
 	}
 
-	public void setAlphaWriteEnable(boolean enable)
-	{
-		this.alphaWrite = enable;
+	public void setDepthWriteEnable(boolean enable) {
+		_enableDepthWrite(handle, enable);
 	}
 
-	public void setBlending(int mode)
-	{
-		if (mode != ALPHA &&
-			mode != ALPHA_ADD &&
-			mode != MODULATE &&
-			mode != MODULATE_X2 &&
-			mode != REPLACE)
-			throw new java.lang.IllegalArgumentException();
-
-		this.blending = mode;
+	public boolean isDepthWriteEnabled() {
+		return _isDepthWriteEnabled(handle);
 	}
 
-	public void setColorWriteEnable(boolean enable)
-	{
-		this.colorWrite = enable;
+	public void setDepthTestEnable(boolean enable) {
+		_enableDepthTest(handle, enable);
 	}
 
-	public void setDepthOffset(float factor, float units)
-	{
-		this.depthOffsetFactor = factor;
-		this.depthOffsetUnits = units;
+	public boolean isDepthTestEnabled() {
+		return _isDepthTestEnabled(handle);
 	}
 
-	public void setDepthTestEnable(boolean enable)
-	{
-		this.depthTest = enable;
+	public void setDepthOffset(float factor, float units) {
+		_setDepthOffset(handle, factor, units);
 	}
 
-	public void setDepthWriteEnable(boolean enable)
-	{
-		this.depthWrite = enable;
+	public float getDepthOffsetFactor() {
+		return _getDepthOffsetFactor(handle);
 	}
 
+	public float getDepthOffsetUnits() {
+		return _getDepthOffsetUnits(handle);
+	}
+
+	//------------------------------------------------------------------
+	// Private methods
+	//------------------------------------------------------------------
+
+	private native static long _ctor(long hInterface);
+
+	private native static void _setBlending(long handle, int mode);
+
+	private native static int _getBlending(long handle);
+
+	private native static void _setAlphaThreshold(long handle, float threshold);
+
+	private native static float _getAlphaThreshold(long handle);
+
+	private native static void _setAlphaWriteEnable(long handle, boolean enable);
+
+	private native static boolean _isAlphaWriteEnabled(long handle);
+
+	private native static void _enableDepthTest(long handle, boolean enable);
+
+	private native static boolean _isDepthTestEnabled(long handle);
+
+	private native static void _enableDepthWrite(long handle, boolean enable);
+
+	private native static boolean _isDepthWriteEnabled(long handle);
+
+	private native static void _enableColorWrite(long handle, boolean enable);
+
+	private native static boolean _isColorWriteEnabled(long handle);
+
+	private native static void _setDepthOffset(long handle, float factor, float units);
+
+	private native static float _getDepthOffsetFactor(long handle);
+
+	private native static float _getDepthOffsetUnits(long handle);
 }
