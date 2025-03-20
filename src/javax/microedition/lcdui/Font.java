@@ -97,7 +97,7 @@ public final class Font
 	{ 
 		if (defaultFont == null) 
 		{
-			defaultFont = new Font(Font.FACE_SYSTEM, Font.STYLE_PLAIN, convertSize(SIZE_MEDIUM)); 
+			defaultFont = new Font(Font.FACE_SYSTEM, Font.STYLE_PLAIN, convertSize(SIZE_SMALL)); 
 		}
 		return defaultFont;
 	}
