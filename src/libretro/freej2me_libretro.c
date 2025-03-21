@@ -825,6 +825,7 @@ void retro_run(void)
 		}
 
 		joypad[18] = InputState(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3); // Num 5
+		joypad[19] = InputState(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3); // Show keyboard
 		
 		/* Right analog will control the pointer, freeing the left analog to mirror the D-Pad if needed. */
 		int joyRx = InputState(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);

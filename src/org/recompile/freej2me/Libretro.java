@@ -18,12 +18,16 @@ package org.recompile.freej2me;
 
 import org.recompile.mobile.Mobile;
 import org.recompile.mobile.MobilePlatform;
+import org.recompile.mobile.OnScreenKeyboard;
+import org.recompile.mobile.PlatformKeyboard;
 
 import java.awt.image.DataBufferInt;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 
 import java.nio.charset.StandardCharsets;
 
@@ -179,22 +183,12 @@ public class Libretro
 							code = (din[1]<<24) | (din[2]<<16) | (din[3]<<8) | din[4];
 							switch(din[0])
 							{
-								//case 0: // keyboard key up (unused)
-								//break;
-
-								//case 1:	// keyboard key down (unused)
-								//break;
-
 								case 2:	// joypad key up
-									MobilePlatform.pressedKeys[code] = false;
-									if (Mobile.getPlatform().midletSelectScreen != null)
-									{
-										Mobile.getPlatform().midletSelectScreen.OnKey(code);
-									}
+									PlatformKeyboard.getInstance().onDeviceInput(code, PlatformKeyboard.KEYCODE_UP);
 								break;
 
 								case 3: // joypad key down
-									MobilePlatform.pressedKeys[code] = true;
+									PlatformKeyboard.getInstance().onDeviceInput(code, PlatformKeyboard.KEYCODE_DOWN);
 								break;
 
 								case 4: // mouse up
@@ -416,7 +410,16 @@ public class Libretro
 										/* Vibration duration should be set to zero to prevent constant sends of the same data, so update it here */
 										Mobile.vibrationDuration = 0;
 
-										final int[] data = ((DataBufferInt) Mobile.getPlatform().getLCD().getRaster().getDataBuffer()).getData();
+										BufferedImage lcd = null;
+										OnScreenKeyboard screenKeyboard = PlatformKeyboard.getInstance().getOnScreenKeyboard();
+										if (screenKeyboard.isShown()) { 
+											lcd = cloneBufferedImage(Mobile.getPlatform().getLCD());
+											OnScreenKeyboard.getInstance().drawOnScreenGraphics(lcd.createGraphics());
+										} else {
+											lcd = Mobile.getPlatform().getLCD();
+										}
+										
+										final int[] data = ((DataBufferInt) lcd.getRaster().getDataBuffer()).getData();
 
 										for (int i = 0; i < data.length; i++)
 										{
@@ -448,6 +451,23 @@ public class Libretro
 			}
 		} // timer
 	} // LibretroIO
+
+	private static BufferedImage cloneBufferedImage(BufferedImage original) {
+        if (original == null) {
+            return null;
+        }
+
+        BufferedImage clone = new BufferedImage(
+                original.getWidth(),
+                original.getHeight(),
+                original.getType());
+
+        Graphics2D g2d = clone.createGraphics();
+        g2d.drawImage(original, 0, 0, null);
+        g2d.dispose();
+
+        return clone;
+    }
 
 	private static String getFormattedLocation(String loc)
 	{

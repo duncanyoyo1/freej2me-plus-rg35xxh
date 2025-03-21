@@ -19,7 +19,6 @@ package org.recompile.mobile;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Font;
-import javax.microedition.lcdui.game.GameCanvas;
 import javax.microedition.lcdui.game.Sprite;
 
 import com.nokia.mid.ui.DirectGraphics;
@@ -29,9 +28,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.awt.image.ConvolveOp;
 import java.awt.image.DataBufferInt;
-import java.awt.image.Kernel;
 
 public class PlatformGraphics extends javax.microedition.lcdui.Graphics implements DirectGraphics
 {

@@ -27,7 +27,7 @@
 #define PIPE_MAX_LEN 255
 
 
-#define PHONE_KEYS 19
+#define PHONE_KEYS 20
 
 /* Input mapping variables and descriptions */
 static const struct retro_controller_description port_1[] =
@@ -83,7 +83,7 @@ static const struct retro_input_descriptor desc[] =
     { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,                                       "Num 5/Pointer Press" },
     { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,                                   "Left Soft Key" },
     { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,                                    "Right Soft Key" },
-
+    { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,                                       "Show OnScreen Keyboard" },
     { 0 },
 };
 

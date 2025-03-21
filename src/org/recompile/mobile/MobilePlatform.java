@@ -184,6 +184,15 @@ public class MobilePlatform
 		if ((displayable = Mobile.getDisplay().getCurrent()) != null) { Mobile.getDisplay().callSerially(() -> {displayable.pointerReleased(x, y); }); }
 	}
 
+	public void onStringInput(String input)
+	{
+		if ((displayable = Mobile.getDisplay().getCurrent()) != null) {
+			if (displayable.canAcceptStringInput()) {
+				Mobile.getDisplay().callSerially(() -> {displayable.onStringInput(input); });
+			}
+		}
+	}
+
 	private void updateKeyState(int key, int val)
 	{
 		int mask=0;

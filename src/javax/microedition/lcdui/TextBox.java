@@ -184,5 +184,16 @@ public class TextBox extends Screen
 		graphics.getGraphics2D().translate(-x, -y);
 		return null;
 	}
+	
+	@Override
+	public boolean canAcceptStringInput() {
+		return true;
+	}
 
+	@Override
+	public void onStringInput(String input) {
+		this.text = input;
+		this.caretPosition = input.length();
+		_invalidate();
+	}
  }

@@ -15,11 +15,9 @@
 	along with FreeJ2ME.  If not, see http://www.gnu.org/licenses/
 */
 package javax.microedition.lcdui;
-
 import java.util.ArrayList;
 
 import org.recompile.mobile.Mobile;
-import org.recompile.mobile.MobilePlatform;
 import org.recompile.mobile.PlatformImage;
 import org.recompile.mobile.PlatformGraphics;
 
@@ -70,6 +68,8 @@ public abstract class Displayable
 		commands.remove(cmd);
 		_invalidate(); 
 	}
+
+	public boolean canAcceptStringInput() { return false; }
 	
 	public int getWidth() { return width; }
 
@@ -366,4 +366,10 @@ public abstract class Displayable
 			finally { isValidating = false; }
 		}
 	}
+
+	public void onStringInput(String input) { 
+		return;
+	}
+
+	public void invalidate() { _invalidate(); }
 }

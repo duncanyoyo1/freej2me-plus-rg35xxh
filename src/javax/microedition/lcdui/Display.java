@@ -15,14 +15,7 @@
 	along with FreeJ2ME.  If not, see http://www.gnu.org/licenses/
 */
 package javax.microedition.lcdui;
-
-import javax.microedition.lcdui.Alert;
-import javax.microedition.lcdui.Displayable;
 import javax.microedition.midlet.MIDlet;
-
-import javax.microedition.lcdui.Image;
-
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.LinkedList;
 import java.util.Queue;
 
