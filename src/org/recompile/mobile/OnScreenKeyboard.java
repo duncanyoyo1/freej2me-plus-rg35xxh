@@ -10,12 +10,14 @@ public class OnScreenKeyboard {
     private int lcdWidth;
     private int lcdHeight;
     private boolean enabled = false;
+    private boolean isDirectInput = false;
     
     T9Key[][] t9NormalKeys = null;
     T9Key[][] t9SymbolKeys = null;
+    T9Key[][] t9DirectKeys = null;
 
-    private int currentKeyPositionX = 0;
-    private int currentKeyPositionY = 0;
+    private int currentKeyColIndex = 0;
+    private int currentKeyRowIndex = 0;
     private String currentText = "";
     private int mode = 0;
     private boolean isUpperCase = false;
@@ -35,6 +37,10 @@ public class OnScreenKeyboard {
         this.sendUserInputStringToPlatformKeyboard();
     }
 
+    public void onDirectInput(int keyCode, int action) {
+        PlatformKeyboard.getInstance().onOnScreenKeyboardDirectInput(keyCode, action);
+    }
+
     public static synchronized OnScreenKeyboard getInstance() {
         if (instance == null) {
             instance = new OnScreenKeyboard();
@@ -46,8 +52,10 @@ public class OnScreenKeyboard {
     {
         enabled = true;
         currentText = "";
-        currentKeyPositionX = 0;
-        currentKeyPositionY = 0;
+        currentKeyColIndex = 0;
+        currentKeyRowIndex = 0;
+        isUpperCase = false;
+        mode = 0;
         getCurrentFocusedKey().onFocus();
     }
 
@@ -94,7 +102,7 @@ public class OnScreenKeyboard {
                 case 7:
 
                 // OK
-                getCurrentFocusedKey().onKeyPress();
+                getCurrentFocusedKey().onKeyPress(isDirectInput);
                 
                 break;
 
@@ -115,6 +123,23 @@ public class OnScreenKeyboard {
                 // 0
                 backspace();
                 break;
+
+                case 18:
+
+                changeDirectInput();
+                break;
+
+            }
+        }
+
+        if (action == PlatformKeyboard.KEYCODE_UP) {
+            switch(keyCode)
+            {
+                case 7:
+                if (isDirectInput) {
+                    getCurrentFocusedKey().onKeyRelease();
+                }
+                break;
             }
         }
     }
@@ -125,10 +150,17 @@ public class OnScreenKeyboard {
             return;
         }
 
-        showT9KeyboardLayout(g2d);
+        if (isDirectInput) {
+            showT9DirectKeyboardLayout(g2d);
+        } else {
+            showT9KeyboardLayout(g2d);
+        }
     }
 
     private T9Key[][] getCurrentT9Keys() {
+        if (isDirectInput) {
+            return t9DirectKeys;
+        }
         if (mode == 0) {
             return t9NormalKeys;
         } else {
@@ -136,8 +168,17 @@ public class OnScreenKeyboard {
         }
     }
 
+    private void changeDirectInput() {
+        getCurrentFocusedKey().onLeave();
+        isDirectInput = !isDirectInput;
+        getCurrentFocusedKey().onFocus();
+    }
+
     private String[] getKeyDisplayNames() {
-        if (mode == 0) {
+        if (isDirectInput) {
+            String[] t9DirectKeyTexts = {"1", "2 abc", "3 def", "4 ghi", "5 jkl", "6 mno", "7 pqrs", "8 TUV", "9 wxyz", "*", "0", "#"};
+            return t9DirectKeyTexts;
+        } else if (mode == 0) {
             if (isUpperCase) {
                 String[] t9KeyTexts = {"_ 0,1", "2 ABC", "3 DEF", "4 GHI", "5 JKL", "6 MNO", "7 PQRS", "8 TUV", "9 WXYZ"};
                 return t9KeyTexts;
@@ -152,14 +193,20 @@ public class OnScreenKeyboard {
     }
 
     private void changeMode() {
+        if (isDirectInput) {
+            return;
+        }
         getCurrentFocusedKey().onLeave();
         mode = mode == 0 ? 1 : 0;
-        currentKeyPositionX = 0;
-        currentKeyPositionY = 0;
+        currentKeyColIndex = 0;
+        currentKeyRowIndex = 0;
         getCurrentFocusedKey().onFocus();
     }
 
     private void changeCase() {
+        if (isDirectInput) {
+            return;
+        }
         isUpperCase = !isUpperCase;
     }
 
@@ -187,10 +234,10 @@ public class OnScreenKeyboard {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.setFont(g2d.getFont().deriveFont(Font.PLAIN, 10));
 
-        g2d.setColor(Color.WHITE);
+        g2d.setColor(new Color(255, 255, 255, 200));
         g2d.fillRect(40, 50 , lcdWidth - 80, 20);
 
-        g2d.setColor(Color.BLACK);
+        g2d.setColor(new Color(0, 0, 0, 240));
         g2d.drawRect(40, 50, lcdWidth - 80, 20);
 
         g2d.setColor(Color.BLACK);
@@ -213,6 +260,10 @@ public class OnScreenKeyboard {
         g2d.setFont(g2d.getFont().deriveFont(Font.PLAIN, 8));
 
         T9Key[][] t9Keys = getCurrentT9Keys();
+
+        if (t9Keys.length == 4) {
+            return;
+        }
         
         for (int row = 0; row < 3; row++) 
         {
@@ -222,13 +273,55 @@ public class OnScreenKeyboard {
                 int y = startY + row * (buttonSize + padding);
 
                 if (t9Keys[row][col].isFocused()) {
-                    g2d.setColor(Color.RED);
-                } else {
-                    g2d.setColor(Color.BLACK);
+                    g2d.setColor(new Color(255, 0, 0, 200));
+                    g2d.fillRect(x - borderSize, y - borderSize, buttonSize + 2 * borderSize, buttonSize + 2 * borderSize);
                 }
-                g2d.fillRect(x - borderSize, y - borderSize, buttonSize + 2 * borderSize, buttonSize + 2 * borderSize);
+                
 
-                g2d.setColor(Color.LIGHT_GRAY);
+                g2d.setColor(new Color(192, 192, 192, 200));
+                g2d.fillRect(x, y, buttonSize, buttonSize);
+
+                g2d.setColor(Color.BLACK);
+                g2d.drawString(getKeyDisplayNames()[row * 3 + col], x + buttonSize / 2 - 12, y + buttonSize / 2 + 5);
+            }
+        }
+
+        g2d.dispose();
+    }
+
+    private void showT9DirectKeyboardLayout(Graphics2D g2d) 
+    {
+        int buttonSize = 40;
+        int padding = 8;
+        int borderSize = 2;
+        int startX = (lcdWidth - (3 * buttonSize + 2 * padding)) / 2;
+        int startY = lcdHeight - (4 * buttonSize + 2 * padding) - 20;
+
+        g2d.setColor(new Color(0, 0, 0, 128));
+        g2d.fillRect(0, 0, lcdWidth, lcdHeight);
+
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setFont(g2d.getFont().deriveFont(Font.PLAIN, 8));
+
+        T9Key[][] t9Keys = getCurrentT9Keys();
+
+        if (t9Keys.length == 3) {
+            return;
+        }
+        
+        for (int row = 0; row < 4; row++) 
+        {
+            for (int col = 0; col < 3; col++) 
+            {
+                int x = startX + col * (buttonSize + padding);
+                int y = startY + row * (buttonSize + padding);
+
+                if (t9Keys[row][col].isFocused()) {
+                    g2d.setColor(new Color(255, 0, 0, 70));
+                    g2d.fillRect(x - borderSize, y - borderSize, buttonSize + 2 * borderSize, buttonSize + 2 * borderSize);
+                }
+
+                g2d.setColor(new Color(192, 192, 192, 70));
                 g2d.fillRect(x, y, buttonSize, buttonSize);
 
                 g2d.setColor(Color.BLACK);
@@ -267,56 +360,81 @@ public class OnScreenKeyboard {
         t9SymbolKeys[2][0] = new T9Key(7, new String[]{"#"}, this);
         t9SymbolKeys[2][1] = new T9Key(8, new String[]{"="}, this);
         t9SymbolKeys[2][2] = new T9Key(9, new String[]{"/"}, this);
+
+        t9DirectKeys = new T9Key[4][3];
+        t9DirectKeys[0][0] = new T9Key(10, new String[]{"1"}, this);
+        t9DirectKeys[0][1] = new T9Key(14, new String[]{"2"}, this);
+        t9DirectKeys[0][2] = new T9Key(11, new String[]{"3"}, this);
+        t9DirectKeys[1][0] = new T9Key(15, new String[]{"4"}, this);
+        t9DirectKeys[1][1] = new T9Key(18, new String[]{"5"}, this);
+        t9DirectKeys[1][2] = new T9Key(16, new String[]{"6"}, this);
+        t9DirectKeys[2][0] = new T9Key(5, new String[]{"7"}, this);
+        t9DirectKeys[2][1] = new T9Key(17, new String[]{"8"}, this);
+        t9DirectKeys[2][2] = new T9Key(4, new String[]{"9"}, this);
+        t9DirectKeys[3][0] = new T9Key(12, new String[]{"*"}, this);
+        t9DirectKeys[3][1] = new T9Key(6, new String[]{"0"}, this);
+        t9DirectKeys[3][2] = new T9Key(13, new String[]{"#"}, this);
     }
 
     private T9Key getCurrentFocusedKey() {
+        if (isDirectInput) {
+            return t9DirectKeys[currentKeyRowIndex][currentKeyColIndex];
+        }
+
         if (mode == 0) {
-            return t9NormalKeys[currentKeyPositionY][currentKeyPositionX];
+            return t9NormalKeys[currentKeyRowIndex][currentKeyColIndex];
         } else {
-            return t9SymbolKeys[currentKeyPositionY][currentKeyPositionX];
+            return t9SymbolKeys[currentKeyRowIndex][currentKeyColIndex];
         }
     }
 
     private void onKeyboardMoveUp(){
-        if (currentKeyPositionY == 0) {
+        if (currentKeyRowIndex == 0) {
             return;
         }
         T9Key currentFocusedKey = getCurrentFocusedKey();
         currentFocusedKey.onLeave();
-        currentKeyPositionY--;
+        currentKeyRowIndex--;
         currentFocusedKey = getCurrentFocusedKey();
         currentFocusedKey.onFocus();
     }
 
     private void onKeynoardMoveDown(){
-        if (currentKeyPositionY == 2) {
-            return;
+        if (isDirectInput) {
+            if (currentKeyRowIndex == 3) {
+                return;
+            }
+        } else {
+            if (currentKeyRowIndex == 2) {
+                return;
+            }
         }
+
         T9Key currentFocusedKey = getCurrentFocusedKey();
         currentFocusedKey.onLeave();
-        currentKeyPositionY++;
+        currentKeyRowIndex++;
         currentFocusedKey = getCurrentFocusedKey();
         currentFocusedKey.onFocus();
     }
 
     private void onKeyboardMoveLeft(){
-        if (currentKeyPositionX == 0) {
+        if (currentKeyColIndex == 0) {
             return;
         }
         T9Key currentFocusedKey = getCurrentFocusedKey();
         currentFocusedKey.onLeave();
-        currentKeyPositionX--;
+        currentKeyColIndex--;
         currentFocusedKey = getCurrentFocusedKey();
         currentFocusedKey.onFocus();
     }
 
     private void onKeyboardMoveRight(){
-        if (currentKeyPositionX == 2) {
+        if (currentKeyColIndex == 2) {
             return;
         }
         T9Key currentFocusedKey = getCurrentFocusedKey();
         currentFocusedKey.onLeave();
-        currentKeyPositionX++;
+        currentKeyColIndex++;
         currentFocusedKey = getCurrentFocusedKey();
         currentFocusedKey.onFocus();
     }
@@ -326,12 +444,13 @@ public class OnScreenKeyboard {
         private int state = 0;
         private int currentIndex = -1;
         private boolean characterCommitted = false;
+        private int keyCode;
 
         private java.util.Timer timer = null;
         private java.util.TimerTask timerTask;
         private OnScreenKeyboard onScreenKeyboard;
         
-        private void resetTimer() {
+        private void setInputTimer() {
             cancelTimer();
             timer = new java.util.Timer();
             timerTask = new java.util.TimerTask() {
@@ -345,9 +464,10 @@ public class OnScreenKeyboard {
             timer.schedule(timerTask, 1000);
         }
 
-        public T9Key(int keyNumber, String[] characters, OnScreenKeyboard onScreenKeyboard) {
+        public T9Key(int keyCode, String[] characters, OnScreenKeyboard onScreenKeyboard) {
             this.characters = characters;
             this.onScreenKeyboard = onScreenKeyboard;
+            this.keyCode = keyCode;
         }
 
         public void onFocus() {
@@ -355,14 +475,24 @@ public class OnScreenKeyboard {
             characterCommitted = true;
         }
 
-        public void onKeyPress() {
+        public void onKeyPress(boolean isDirect) {
+
+            if (isDirect) {
+                onScreenKeyboard.onDirectInput(keyCode, PlatformKeyboard.KEYCODE_DOWN);
+                return;
+            }
+
             characterCommitted = false;
             if (currentIndex < characters.length - 1) {
                 currentIndex++;
             } else {
                 currentIndex = 0;
             }
-            resetTimer();
+            setInputTimer();
+        }
+
+        public void onKeyRelease() {
+            onScreenKeyboard.onDirectInput(keyCode, PlatformKeyboard.KEYCODE_UP);
         }
 
         public void onLeave() {

@@ -385,6 +385,16 @@ public class MobilePlatform
 		}
 	}
 
+	public void onDirectInput(int keyCode, int action) {
+		if (action == PlatformKeyboard.KEYCODE_DOWN) {
+			keyPressed(Mobile.getMobileKey(keyCode));
+			//MobilePlatform.pressedKeys[keyCode] = true;
+		} else if (action == PlatformKeyboard.KEYCODE_UP) {
+			keyReleased(Mobile.getMobileKey(keyCode));
+			//MobilePlatform.pressedKeys[keyCode] = false;
+		}
+	}
+
 	private void limitFps() 
 	{
 		if(Mobile.limitFPS == 0) { lastRenderTime = System.nanoTime(); return; }

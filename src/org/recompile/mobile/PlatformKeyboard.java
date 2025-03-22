@@ -55,4 +55,8 @@ public class PlatformKeyboard {
     public void onOnScreenKeyboardStringInput(String input) {
         Mobile.getPlatform().onStringInput(input);
     }
+
+    public void onOnScreenKeyboardDirectInput(int keyCode, int action) {
+        Mobile.getPlatform().onDirectInput(keyCode, action);
+    }
 }
