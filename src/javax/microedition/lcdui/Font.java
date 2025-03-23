@@ -16,7 +16,6 @@
 */
 package javax.microedition.lcdui;
 
-import org.recompile.mobile.Mobile;
 import org.recompile.mobile.PlatformFont;
 
 public final class Font
@@ -39,10 +38,10 @@ public final class Font
 
 	private static final int[] fontSizes = 
 	{
-		 9, 10, 12, // < 128 minimum px dimension
-		12, 14, 16, // < 176 minimum px dimension
-		14, 16, 18, // < 220 minimum px dimension
-		16, 18, 20, // >= 220 minimum px dimension
+		 8, 9, 11, // < 128 minimum px dimension
+		10, 12, 14, // < 176 minimum px dimension
+		10, 12, 14, // < 220 minimum px dimension
+		12, 14, 16, // >= 220 minimum px dimension
 	};
 
 	private static int screenType = -4;
