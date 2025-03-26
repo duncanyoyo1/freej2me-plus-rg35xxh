@@ -32,44 +32,59 @@ public class PlatformFont
 
 	public java.awt.Font awtFont;
 
-	private static final String FONT_REGULAR = "freej2me_system" + File.separatorChar + "fonts" + File.separatorChar + "font_regular.ttf";
-	private static final String FONT_BOLD = "freej2me_system" + File.separatorChar + "fonts" + File.separatorChar + "font_bold.ttf";
-	private static final String FONT_ITALIC = "freej2me_system" + File.separatorChar + "fonts" + File.separatorChar + "font_italic.ttf";
+	private static String FONT_REGULAR = "freej2me_system" + File.separatorChar + "fonts" + File.separatorChar + "font_regular.ttf";
+	private static String FONT_BOLD = "freej2me_system" + File.separatorChar + "fonts" + File.separatorChar + "font_bold.ttf";
+	private static String FONT_ITALIC = "freej2me_system" + File.separatorChar + "fonts" + File.separatorChar + "font_italic.ttf";
+	private static String FONT_DEFAULT = "freej2me_system" + File.separatorChar + "fonts" + File.separatorChar + "default_font.ttf";
 	private static class FontLoader {
 		private static final Map<String, java.awt.Font> loadedFonts = new Hashtable<>();
 
 		private FontLoader() {
 		}
 
-		public static java.awt.Font getFont(String fontFilePath, int size) throws Exception {
-			if (loadedFonts.containsKey(fontFilePath)) {
-				return loadedFonts.get(fontFilePath).deriveFont(size);
+		public static java.awt.Font getPlatformFont(Font font) {
+
+			float size = font.getPointSize();
+			int style = font.getStyle();
+			java.awt.Font awtFont = null;
+			if (font.getFace() == Font.FACE_MONOSPACE) {
+				awtFont = new java.awt.Font( java.awt.Font.MONOSPACED, style, font.getPointSize());
+			} else {
+				String fontPath = null;
+				if (style == java.awt.Font.BOLD) {
+					fontPath = FONT_BOLD;
+				} else if (style == java.awt.Font.ITALIC) {
+					fontPath = FONT_ITALIC;
+				} else 
+				{
+					fontPath = FONT_REGULAR;
+				}
+
+				if (loadedFonts.containsKey(fontPath)) {
+					awtFont = loadedFonts.get(fontPath).deriveFont(size);
+				} else {
+					try {
+						awtFont = java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, new java.io.File(fontPath)).deriveFont(size);
+						loadedFonts.put(fontPath, awtFont);
+					} catch (Exception e) {
+						try {
+							awtFont = java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, new java.io.File(FONT_DEFAULT));
+							awtFont = awtFont.deriveFont(style, size);
+							loadedFonts.put(fontPath, awtFont);
+						} catch (Exception e2) {
+							awtFont = new java.awt.Font(java.awt.Font.SANS_SERIF, style, font.getPointSize());
+							loadedFonts.put(fontPath, awtFont);
+						}
+					}
+				}
 			}
-			java.awt.Font font = java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, new java.io.File(fontFilePath));
-			loadedFonts.put(fontFilePath, font);
-			return font.deriveFont((float) size);
+			return awtFont;
 		}
 	}
 
 	public PlatformFont(Font font)
 	{
-		int size = font.getPointSize();
-		int style = font.getStyle();
-		
-		try {
-			if(font.getFace() == Font.FACE_MONOSPACE) { 
-				awtFont = new java.awt.Font( java.awt.Font.MONOSPACED, font.getStyle(), font.getPointSize());
-			} else if (style == java.awt.Font.BOLD) {
-				awtFont = FontLoader.getFont(FONT_BOLD, size);
-			} else if (style == java.awt.Font.ITALIC) {
-				awtFont = FontLoader.getFont(FONT_ITALIC, size);
-			} else 
-			{
-				awtFont = FontLoader.getFont(FONT_REGULAR, size);
-			}
-		} catch (Exception e) {
-			awtFont = new java.awt.Font(java.awt.Font.SANS_SERIF, style, size);
-		}
+		awtFont = FontLoader.getPlatformFont(font);
 
 		if((font.getStyle() & Font.STYLE_UNDERLINED) > 0)
 		{
