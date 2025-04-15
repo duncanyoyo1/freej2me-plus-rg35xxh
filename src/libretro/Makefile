@@ -13,12 +13,6 @@ CORE_DIR := .
 TARGET_NAME := freej2me
 LIBM := -lm
 
-# Toolchain for RG35XXH
-TOOLCHAIN_PATH := /home/clay/toolchain/bin
-CC := $(TOOLCHAIN_PATH)/aarch64-buildroot-linux-gnu-gcc
-CXX := $(TOOLCHAIN_PATH)/aarch64-buildroot-linux-gnu-g++
-AR := $(TOOLCHAIN_PATH)/aarch64-buildroot-linux-gnu-ar
-
 # Compiler flags for RG35XXH
 CFLAGS := -Wall -Wno-unused-result -D__LIBRETRO__ -fPIC -O3
 CXXFLAGS := -Wall -Wno-unused-result -D__LIBRETRO__ -fPIC -O3
